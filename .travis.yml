@@ -1,0 +1,37 @@
+language: python
+
+python:
+  - "3.3"
+  - "3.4"
+  - "3.5"
+  - "3.6"
+  - "3.7-dev"
+
+install:
+  - "pip install -r requirements.txt"
+
+script:
+  - python -m unittest discover -s exodus_core -p "test_*.py"
+  - python setup.py sdist
+
+notifications:
+  email:
+    recipients:
+      - u039b@exodus-privacy.eu.org
+    on_success: always
+    on_failure: always
+
+#before_deploy:
+#  # Set up git user name and tag this commit
+#  - git config --local user.name "YOUR GIT USER NAME"
+#  - git config --local user.email "YOUR GIT USER EMAIL"
+#  - git tag "$(date +'%Y%m%d%H%M%S')-$(git log --format=%h -1)"
+deploy:
+  provider: releases
+  file:
+    - dist/*.tar.gz
+  file_glob: true
+  on:
+    repo: Exodus-Privacy/exodus-core
+    tags: true
+skip_cleanup: true
