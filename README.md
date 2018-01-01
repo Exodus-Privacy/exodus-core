@@ -23,3 +23,9 @@ Run tests:
 ```
 python -m unittest discover -s exodus_core -p "test_*.py"
 ```
+
+## Include it in your project
+Add the following line in your `requirements.txt`:
+```
+git+https://github.com/Exodus-Privacy/exodus-core.git   
+```
