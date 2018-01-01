@@ -6,6 +6,7 @@ import tempfile
 import urllib.request
 import zipfile
 from hashlib import sha256
+from collections import namedtuple
 
 from androguard.core.bytecodes.apk import APK
 
@@ -23,16 +24,19 @@ class StaticAnalysis:
         Load trackers signatures from the official Exodus database.
         :return: a dictionary containing signatures.
         """
+        self.signatures = []
         exodus_url = "https://reports.exodus-privacy.eu.org/api/trackers"
         with urllib.request.urlopen(exodus_url) as url:
             data = json.loads(url.read().decode())
-            self.signatures = data['trackers']
+            for e in data['trackers']:
+                self.signatures.append(namedtuple('tracker', data['trackers'][e].keys())(*data['trackers'][e].values()))
 
     def load_apk(self):
         """
         Load the APK file.
         """
-        self.apk = APK(self.apk_path)
+        if self.apk is None:
+            self.apk = APK(self.apk_path)
 
     def get_embedded_classes(self):
         """
@@ -52,27 +56,36 @@ class StaticAnalysis:
             except subprocess.CalledProcessError:
                 raise Exception('Unable to decode the APK')
 
-    def detect_trackers(self):
+    def detect_trackers_in_list(self, class_list):
         """
-        Detect embedded trackers.
+        Detect embedded trackers in the provided classes list.
+        :return: list of embedded trackers
         """
+        trackers = []
         if self.signatures is None:
             self.load_trackers_signatures()
-
-        classes = self.get_embedded_classes()
-
-        trackers = []
-        for v, i in enumerate(self.signatures):
-            for clazz in classes:
-                tracker = self.signatures[i]
-                sign = tracker['code_signature']
-                if len(sign) > 1:
-                    m = re.search(tracker['code_signature'], clazz)
+        for tracker in self.signatures:
+            if len(tracker.code_signature) > 3:
+                for clazz in class_list:
+                    m = re.search(tracker.code_signature, clazz)
                     if m is not None:
                         trackers.append(tracker)
                         break
-
         return trackers
+
+    def detect_trackers(self, class_list_file = None):
+        """
+        Detect embedded trackers.
+        :return: list of embedded trackers
+        """
+        if self.signatures is None:
+            self.load_trackers_signatures()
+        if class_list_file is None:
+            return self.detect_trackers_in_list(self.get_embedded_classes())
+        else:
+            with open(class_list_file, 'r') as classes_file:
+                classes = classes_file.readlines()
+                return self.detect_trackers_in_list(classes)
 
     def get_version(self):
         """
@@ -130,6 +143,14 @@ class StaticAnalysis:
                 buf = apk.read(BLOCKSIZE)
         return hasher.hexdigest()
 
+    def save_embedded_classes_in_file(self, file_path):
+        """
+        Save list of embedded classes in file.
+        :param file_path: file to write
+        """
+        with open(file_path, 'w+') as f:
+            f.write('\n'.join(self.get_embedded_classes()))
+
     def print_apk_infos(self):
         """
         Print APK information
@@ -155,5 +176,4 @@ class StaticAnalysis:
         trackers = self.detect_trackers()
         print("=== Found trackers")
         for t in trackers:
-            print(' - %s' % t['name'])
-
+            print(' - %s' % t.name)
