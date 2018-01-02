@@ -25,5 +25,5 @@ deploy:
   file: dist/*.tar.gz
   on:
     repo: Exodus-Privacy/exodus-core
-    branch: v1
+    tags: true
 skip_cleanup: true
