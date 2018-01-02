@@ -1,4 +1,4 @@
-# εxodus core
+# εxodus core [![Build Status](https://travis-ci.org/Exodus-Privacy/exodus-core.svg?branch=v1)](https://travis-ci.org/Exodus-Privacy/exodus-core)
 Contains:
 * Static analysis 
 * Network analysis
@@ -24,7 +24,7 @@ Run tests:
 python -m unittest discover -s exodus_core -p "test_*.py"
 ```
 
-## Include it in your project
+## Include it to your project
 Add the following line in your `requirements.txt`:
 ```
 git+https://github.com/Exodus-Privacy/exodus-core.git   
