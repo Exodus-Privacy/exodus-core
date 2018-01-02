@@ -20,7 +20,7 @@ notifications:
 
 deploy:
   provider: releases
-  api_key: "9b7f094cf8bb666d80e49e558bfab4b1888a886e"
+  api_key: "698132023d7d061c4e47982f07125d6ff10532f1"
   file:
     - dist/*.tar.gz
   file_glob: true
