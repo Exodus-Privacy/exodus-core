@@ -22,6 +22,7 @@ deploy:
   provider: releases
   api_key:
     secure: 0fuKzaIHSto7vN3vZPpuotyh+jL3Mzx8du/rGnzz9wq7qnyZ8Rm3zGH8OAg1wzGsDqnh8/QPGOoeGRzwoxxj3A7LlPXGFYs+yO7iz1czv7/3XJDJJz07b6H6h+bbaERYkenR6biDuTRzsQo3YQXUzLV5I+IO3KJYKcLZ023lqbdOBmt7o4/gBFKFbsoZXfmT9ftKPD2+fKuaXfUUp/Ueqp8PE6nc4d8vHuX6DTk09fA+ZQTnGigXpy62jFdAVPmUdxADsxERBRfewSfyMWZsHHsBJD+hNXZXIErcvFyR2UBj+28Zr1sWsjegVavrwk/R2QZEvhcuMxCQBZ61vCJQDyy8+FiRrhXU0MSmJUlkfGIEvbxx/y+bb6GIhyJqbRpkiGus4buk+lnTQxF4yx79AaGcTzpgFUCPFbQxVWSL421WxDagQqHY1FldU9Obypj6LIaBw8PDPUmT4ZRI9n8pzAkxZYVfL/4LZHVJMEdiOnQsCDryXkCV/1iRfje+xEgB71SUtdtWJOTTGYHt9jDpHA8a0Z+nYK1usr2hgochbCQYUgJTIuH49UBxgLBJIOyrO2xZ5G0kbTinPV024L0u0yofpHF8X6Ck6G1i6EbqUXLIqQrWojBA7cdhIt7lr1+BLMpP/i4PZAPgnGhM7Y2hjLTHlfmRwF+3z8qFBUj+rX8=
+  file_glob: true
   file: dist/*.tar.gz
   on:
     repo: Exodus-Privacy/exodus-core
