@@ -32,15 +32,15 @@ class TestExodus(unittest.TestCase):
         # Briar
         classes = list_classes('./apks/braiar.apk')
         self.assertIsNotNone(classes)
-        self.assertEqual(len(classes), 5756)
+        self.assertEqual(len(classes), 120149)
         # Whatsapp
         classes = list_classes('./apks/whatsapp.apk')
         self.assertIsNotNone(classes)
-        self.assertEqual(len(classes), 8686)
+        self.assertEqual(len(classes), 103811)
         # HSBC
         classes = list_classes('./apks/hsbc.apk')
         self.assertIsNotNone(classes)
-        self.assertEqual(len(classes), 10390)
+        self.assertEqual(len(classes), 97928)
 
     def test_embedded_trackers(self):
         # Briar

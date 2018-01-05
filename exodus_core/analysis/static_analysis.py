@@ -3,10 +3,12 @@ import os
 import re
 import subprocess
 import tempfile
+import time
 import urllib.request
 import zipfile
-from hashlib import sha256
 from collections import namedtuple
+from hashlib import sha256
+from threading import Thread
 
 from androguard.core.bytecodes.apk import APK
 
@@ -43,15 +45,18 @@ class StaticAnalysis:
         Get the list of Java classes embedded into all DEX files.
         :return: array of Java classes names as string
         """
+        start = time.time()
         with tempfile.TemporaryDirectory() as tmp_dir:
             with zipfile.ZipFile(self.apk_path, "r") as apk_zip:
                 apk_zip.extractall(tmp_dir)
             dexdump = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'dexdump', 'dexdump')
-            cmd = '%s %s/classes*.dex | grep "Class descriptor" | cut -d: -f2 | sort | uniq' % (
+            cmd = '%s %s/classes*.dex | grep -E "(\w+/)+\w+" | sort | uniq' % (
                 dexdump, tmp_dir)
             try:
                 out = subprocess.check_output(cmd, stderr = subprocess.STDOUT, shell = True,
                                               universal_newlines = True).splitlines()
+                end = time.time()
+                print('get_embedded_classes took %s sec.' % (end - start))
                 return out
             except subprocess.CalledProcessError:
                 raise Exception('Unable to decode the APK')
@@ -61,17 +66,32 @@ class StaticAnalysis:
         Detect embedded trackers in the provided classes list.
         :return: list of embedded trackers
         """
-        trackers = []
+        start = time.time()
         if self.signatures is None:
             self.load_trackers_signatures()
+
+        def _detect_tracker(tracker, class_list, results, i):
+            for clazz in class_list:
+                m = re.search(tracker.code_signature, clazz)
+                if m is not None:
+                    results[i] = tracker
+            return None
+
+        threads = [None] * len(self.signatures)
+        results = [None] * len(self.signatures)
+        i = 0
         for tracker in self.signatures:
             if len(tracker.code_signature) > 3:
-                for clazz in class_list:
-                    m = re.search(tracker.code_signature, clazz)
-                    if m is not None:
-                        trackers.append(tracker)
-                        break
-        return trackers
+                threads[i] = Thread(target = _detect_tracker, args = (tracker, class_list, results, i))
+                threads[i].start()
+                i += 1
+
+        for j in range(i):
+            threads[j].join()
+
+        end = time.time()
+        print('detect_trackers_in_list took %s sec.' % (end - start))
+        return [t for t in results if t is not None]
 
     def detect_trackers(self, class_list_file = None):
         """
