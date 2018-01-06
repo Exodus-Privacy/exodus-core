@@ -22,10 +22,10 @@ install_requires = [
 
 data_dir = os.path.join('exodus_core', 'analysis', 'dexdump')
 data_files = [(d, [os.path.join(d, f) for f in files])
-             for d, folders, files in os.walk(data_dir)]
+              for d, folders, files in os.walk(data_dir)]
 
 setup(name = 'exodus_core',
-      version = '1.0.3',
+      version = '1.0.4',
       description = 'Core functionality of εxodus',
       author = 'Exodus Privacy',
       author_email = 'contact@exodus-privacy.eu.org',

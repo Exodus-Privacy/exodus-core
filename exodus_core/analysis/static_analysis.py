@@ -18,6 +18,7 @@ class StaticAnalysis:
         self.apk = None
         self.apk_path = apk_path
         self.signatures = None
+        self.classes = None
         if apk_path is not None:
             self.load_apk()
 
@@ -45,19 +46,21 @@ class StaticAnalysis:
         Get the list of Java classes embedded into all DEX files.
         :return: array of Java classes names as string
         """
+        if self.classes is not None:
+            return self.classes
         start = time.time()
         with tempfile.TemporaryDirectory() as tmp_dir:
             with zipfile.ZipFile(self.apk_path, "r") as apk_zip:
                 apk_zip.extractall(tmp_dir)
             dexdump = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'dexdump', 'dexdump')
-            cmd = '%s %s/classes*.dex | grep -E "(\w+/)+\w+" | awk \'{$1=$1};1\' | uniq' % (
+            cmd = '%s %s/classes*.dex | perl -n -e\'/[A-Z]+((?:\w+\/)+\w+)/ && print "$1\n"\'|sort|uniq' % (
                 dexdump, tmp_dir)
             try:
-                out = subprocess.check_output(cmd, stderr = subprocess.STDOUT, shell = True,
-                                              universal_newlines = True).splitlines()
+                self.classes = subprocess.check_output(cmd, stderr = subprocess.STDOUT, shell = True,
+                                                       universal_newlines = True).splitlines()
                 end = time.time()
-                print('get_embedded_classes took %s sec.' % (end - start))
-                return out
+                print('get_embedded_classes took %.2f sec.' % (end - start))
+                return self.classes
             except subprocess.CalledProcessError:
                 raise Exception('Unable to decode the APK')
 
@@ -90,7 +93,7 @@ class StaticAnalysis:
             threads[j].join()
 
         end = time.time()
-        print('detect_trackers_in_list took %s sec.' % (end - start))
+        print('detect_trackers_in_list took %.2f sec.' % (end - start))
         return [t for t in results if t is not None]
 
     def detect_trackers(self, class_list_file = None):
