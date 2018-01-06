@@ -25,7 +25,7 @@ data_files = [(d, [os.path.join(d, f) for f in files])
              for d, folders, files in os.walk(data_dir)]
 
 setup(name = 'exodus_core',
-      version = '1.0.1',
+      version = '1.0.3',
       description = 'Core functionality of εxodus',
       author = 'Exodus Privacy',
       author_email = 'contact@exodus-privacy.eu.org',

@@ -50,7 +50,7 @@ class StaticAnalysis:
             with zipfile.ZipFile(self.apk_path, "r") as apk_zip:
                 apk_zip.extractall(tmp_dir)
             dexdump = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'dexdump', 'dexdump')
-            cmd = '%s %s/classes*.dex | grep -E "(\w+/)+\w+" | sort | uniq' % (
+            cmd = '%s %s/classes*.dex | grep -E "(\w+/)+\w+" | awk \'{$1=$1};1\' | uniq' % (
                 dexdump, tmp_dir)
             try:
                 out = subprocess.check_output(cmd, stderr = subprocess.STDOUT, shell = True,
