@@ -18,6 +18,9 @@ os.system('pip install git+https://github.com/androguard/androguard.git@v3.1.0-p
 
 install_requires = [
     "requests==2.18.4",
+    "Pillow==5.0.0",
+    "dhash==1.3",
+    "jellyfish==0.5.6",
 ]
 
 data_dir = os.path.join('exodus_core', 'analysis', 'dexdump')
@@ -25,7 +28,7 @@ data_files = [(d, [os.path.join(d, f) for f in files])
               for d, folders, files in os.walk(data_dir)]
 
 setup(name = 'exodus_core',
-      version = '1.0.4',
+      version = '1.0.5',
       description = 'Core functionality of εxodus',
       author = 'Exodus Privacy',
       author_email = 'contact@exodus-privacy.eu.org',

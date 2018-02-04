@@ -1,6 +1,24 @@
 import unittest
 
 from exodus_core.analysis.static_analysis import StaticAnalysis
+from exodus_core.analysis.apk_signature import ApkSignature
+
+PHASH_SIZE = 16
+
+
+def phash(apk):
+    sa = StaticAnalysis(apk)
+    return sa.get_icon_phash()
+
+
+def save_icon(apk, path):
+    sa = StaticAnalysis(apk)
+    return sa.save_icon(path)
+
+
+def icon_path(apk):
+    sa = StaticAnalysis(apk)
+    return sa.get_icon_path()
 
 
 def list_classes(apk):
@@ -27,6 +45,29 @@ class TestExodus(unittest.TestCase):
         sa.load_trackers_signatures()
         self.assertIsNotNone(sa.signatures)
         self.assertGreater(len(sa.signatures), 70)
+
+    def test_icon_diff(self):
+        # Briar
+        phash_1 = phash('./apks/braiar.apk')
+        phash_2 = phash('./apks/whatsapp.apk')
+        phash_3 = phash('./apks/hsbc.apk')
+        sa = StaticAnalysis()
+        diff_1 = sa.get_icon_similarity(phash_1, phash_2)
+        diff_2 = sa.get_icon_similarity(phash_1, phash_1)
+        diff_3 = sa.get_icon_similarity(phash_2, phash_1)
+        diff_4 = sa.get_icon_similarity(phash_2, phash_2)
+        diff_5 = sa.get_icon_similarity(phash_1, phash_3)
+        diff_6 = sa.get_icon_similarity(phash_2, phash_3)
+        self.assertEqual(diff_1, 0.7265625)
+        self.assertEqual(diff_1, diff_3)
+        self.assertEqual(diff_2, 1.0)
+        self.assertEqual(diff_2, diff_4)
+        self.assertNotEqual(diff_5, diff_6)
+
+    def test_app_uid(self):
+        self.assertEqual(ApkSignature('./apks/braiar.apk').app_uid, '31BE732147F50EA10063BEACFAB2B4D6E0EEFC32')
+        self.assertEqual(ApkSignature('./apks/whatsapp.apk').app_uid, 'F799956E176E259FC28EB51AAD2E3519C9033619')
+        self.assertEqual(ApkSignature('./apks/hsbc.apk').app_uid, 'E3B4E87A002A37436CC6B008D3B43C0DB1A4FE13')
 
     def test_list_classes(self):
         # Briar

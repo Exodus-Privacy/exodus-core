@@ -1,14 +1,21 @@
+import hashlib
 import json
 import os
 import re
 import subprocess
 import tempfile
-import time
 import urllib.request
 import zipfile
 from collections import namedtuple
 from hashlib import sha256
+from tempfile import NamedTemporaryFile
 from threading import Thread
+
+from future.moves import sys
+
+from exodus_core.analysis.certificate import Certificate
+
+PHASH_SIZE = 8
 
 from androguard.core.bytecodes.apk import APK
 
@@ -48,7 +55,7 @@ class StaticAnalysis:
         """
         if self.classes is not None:
             return self.classes
-        start = time.time()
+        # start = time.time()
         with tempfile.TemporaryDirectory() as tmp_dir:
             with zipfile.ZipFile(self.apk_path, "r") as apk_zip:
                 apk_zip.extractall(tmp_dir)
@@ -58,8 +65,8 @@ class StaticAnalysis:
             try:
                 self.classes = subprocess.check_output(cmd, stderr = subprocess.STDOUT, shell = True,
                                                        universal_newlines = True).splitlines()
-                end = time.time()
-                print('get_embedded_classes took %.2f sec.' % (end - start))
+                # end = time.time()
+                # print('get_embedded_classes took %.2f sec.' % (end - start))
                 return self.classes
             except subprocess.CalledProcessError:
                 raise Exception('Unable to decode the APK')
@@ -69,7 +76,7 @@ class StaticAnalysis:
         Detect embedded trackers in the provided classes list.
         :return: list of embedded trackers
         """
-        start = time.time()
+        # start = time.time()
         if self.signatures is None:
             self.load_trackers_signatures()
 
@@ -92,8 +99,8 @@ class StaticAnalysis:
         for j in range(i):
             threads[j].join()
 
-        end = time.time()
-        print('detect_trackers_in_list took %.2f sec.' % (end - start))
+        # end = time.time()
+        # print('detect_trackers_in_list took %.2f sec.' % (end - start))
         return [t for t in results if t is not None]
 
     def detect_trackers(self, class_list_file = None):
@@ -152,6 +159,81 @@ class StaticAnalysis:
         """
         return self.apk.get_libraries()
 
+    def get_icon_path(self):
+        """
+        Get the icon path in the ZIP archive
+        :return: icon path in the ZIP archive
+        """
+        return self.apk.get_app_icon()
+
+    def save_icon(self, path):
+        """
+        Extract the icon from the ZIP archive and save it at the given path
+        :param path: destination path of the icon
+        :return: destination path of the icon, None in case of error
+        """
+        icon = self.get_icon_path()
+        if icon is None:
+            return None
+
+        with zipfile.ZipFile(self.apk_path) as z:
+            with open(path, 'wb') as f:
+                f.write(z.read(icon))
+                return path
+
+    def get_icon_phash(self):
+        """
+        Get the perceptual hash of the icon
+        :return: the perceptual hash, None in case of error
+        """
+        import dhash
+        from PIL import Image
+        dhash.force_pil()  # Force PIL
+        with NamedTemporaryFile() as ic:
+            path = self.save_icon(ic.name)
+            if path is None:
+                return None
+            image = Image.open(ic.name)
+            row, col = dhash.dhash_row_col(image, size = PHASH_SIZE)
+            return row << (PHASH_SIZE * PHASH_SIZE) | col
+
+    @staticmethod
+    def get_icon_similarity(phash_origin, phash_candidate):
+        """
+        Get icons similarity score [0,1.0]
+        :param phash_origin: original icon
+        :param phash_candidate: icon to be compared
+        :return: similarity score [0,1.0]
+        """
+        import dhash
+        diff = dhash.get_num_bits_different(phash_origin, phash_candidate)
+        return 1 - 1. * diff / (PHASH_SIZE * PHASH_SIZE * 2)
+
+    def get_application_universal_id(self):
+        parts = [self.get_package()]
+        for c in self.get_certificates():
+            parts.append(c.fingerprint)
+        return hashlib.sha1(' '.join(parts).encode('utf-8')).hexdigest().upper()
+
+    def get_certificates(self):
+        certificates = []
+        signs = self.apk.get_signature_names()
+        for s in signs:
+            with zipfile.ZipFile(self.apk_path) as z:
+                with tempfile.NamedTemporaryFile(delete = False) as f:
+                    f.write(z.read(s))
+                    f.flush()
+                    c = Certificate(f.name)
+                    certificates.append(c)
+        return certificates
+
+    def get_apk_size(self):
+        """
+        Get the APK file size in bytes
+        :return: APK file size
+        """
+        return os.path.getsize(self.apk_path)
+
     def get_sha256(self):
         """
         Get the sha256sum of the APK file
@@ -183,6 +265,7 @@ class StaticAnalysis:
         print('- APK sum: %s' % self.get_sha256())
         print('- App version: %s' % self.get_version())
         print('- App version code: %s' % self.get_version_code())
+        print('- App UID: %s' % self.get_application_universal_id())
         print('- App name: %s' % self.get_app_name())
         print('- App package: %s' % self.get_package())
         print('- App permissions: %s' % len(self.get_permissions()))
@@ -191,12 +274,23 @@ class StaticAnalysis:
         print('- App libraries: %s' % len(self.get_libraries()))
         for l in self.get_libraries():
             print('    - %s' % l)
+        certificates = self.get_certificates()
+        print('- Certificates: %s' % len(certificates))
+        for c in certificates:
+            print('    - %s' % c)
 
     def print_embedded_trackers(self):
         """
         Print detected trackers
         """
         trackers = self.detect_trackers()
-        print("=== Found trackers")
+        print('=== Found trackers: {0}'.format(len(trackers)))
         for t in trackers:
             print(' - %s' % t.name)
+
+
+if __name__ == '__main__':
+    apk_path = sys.argv[1]
+    sa = StaticAnalysis(apk_path)
+    sa.print_apk_infos()
+    sa.print_embedded_trackers()
