@@ -40,6 +40,7 @@ def version_code(apk):
 
 
 class TestExodus(unittest.TestCase):
+
     def test_trackers_list(self):
         sa = StaticAnalysis()
         sa.load_trackers_signatures()
@@ -47,7 +48,11 @@ class TestExodus(unittest.TestCase):
         self.assertGreater(len(sa.signatures), 70)
 
     def test_icon_diff(self):
-        # Briar
+        phash_4 = phash('./apks/nextcloud.apk')
+        self.assertEqual(phash_4, 304084653533220729994981650157384312320)
+        phash_5 = phash('./apks/francetv.apk')
+        print(phash_5)
+        self.assertEqual(phash_5, 277543533468213633177527091973989793792)
         phash_1 = phash('./apks/braiar.apk')
         phash_2 = phash('./apks/whatsapp.apk')
         phash_3 = phash('./apks/hsbc.apk')

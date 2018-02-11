@@ -101,8 +101,8 @@ class ApkSignature:
             },
             'app_uid': {
                 'origin': self.app_uid,
-                'candidate': candidate.appUID,
-                'matching': self.app_uid == candidate.appUID
+                'candidate': candidate.app_uid,
+                'matching': self.app_uid == candidate.app_uid
             },
             'version_names': {
                 'origin': self.version_name,

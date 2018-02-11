@@ -1,5 +1,7 @@
+import binascii
 import hashlib
 import json
+import logging
 import os
 import re
 import subprocess
@@ -11,13 +13,73 @@ from hashlib import sha256
 from tempfile import NamedTemporaryFile
 from threading import Thread
 
+from androguard.core.bytecodes import axml
+from androguard.core.bytecodes.apk import APK
+from cryptography.hazmat.primitives import hashes
 from future.moves import sys
-
-from exodus_core.analysis.certificate import Certificate
 
 PHASH_SIZE = 8
 
-from androguard.core.bytecodes.apk import APK
+
+def which(program):
+    import os
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+
+    return None
+
+class Certificate:
+    def __init__(self, cert):
+        self.fingerprint = binascii.hexlify(cert.fingerprint(hashes.SHA1())).decode("ascii")
+        self.issuer = Certificate.get_Name(cert.issuer, short = False)
+        self.subject = Certificate.get_Name(cert.subject, short = False)
+        self.serial = cert.serial_number
+
+    @staticmethod
+    def get_Name(name, short = False):
+        """
+            Return the distinguished name of an X509 Certificate
+
+            :param name: Name object to return the DN from
+            :param short: Use short form (Default: False)
+
+            :type name: :class:`cryptography.x509.Name`
+            :type short: Boolean
+
+            :rtype: str
+        """
+
+        # For the shortform, we have a lookup table
+        # See RFC4514 for more details
+        sf = {
+            "countryName": "C",
+            "stateOrProvinceName": "ST",
+            "localityName": "L",
+            "organizationalUnitName": "OU",
+            "organizationName": "O",
+            "commonName": "CN",
+            "emailAddress": "E",
+        }
+        return ", ".join(
+            ["{}={}".format(attr.oid._name if not short or attr.oid._name not in sf else sf[attr.oid._name], attr.value)
+             for
+             attr in name])
+
+    def __str__(self):
+        return 'Issuer: %s \n' \
+               'Subject: %s \n' \
+               'Fingerprint: %s \n' \
+               'Serial: %s' % (self.issuer, self.subject, self.fingerprint, self.serial)
 
 
 class StaticAnalysis:
@@ -40,6 +102,7 @@ class StaticAnalysis:
             data = json.loads(url.read().decode())
             for e in data['trackers']:
                 self.signatures.append(namedtuple('tracker', data['trackers'][e].keys())(*data['trackers'][e].values()))
+        logging.debug('%s trackers signatures loaded' % len(self.signatures))
 
     def load_apk(self):
         """
@@ -55,20 +118,19 @@ class StaticAnalysis:
         """
         if self.classes is not None:
             return self.classes
-        # start = time.time()
         with tempfile.TemporaryDirectory() as tmp_dir:
             with zipfile.ZipFile(self.apk_path, "r") as apk_zip:
                 apk_zip.extractall(tmp_dir)
-            dexdump = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'dexdump', 'dexdump')
+            dexdump = which('dexdump')
             cmd = '%s %s/classes*.dex | perl -n -e\'/[A-Z]+((?:\w+\/)+\w+)/ && print "$1\n"\'|sort|uniq' % (
                 dexdump, tmp_dir)
             try:
                 self.classes = subprocess.check_output(cmd, stderr = subprocess.STDOUT, shell = True,
                                                        universal_newlines = True).splitlines()
-                # end = time.time()
-                # print('get_embedded_classes took %.2f sec.' % (end - start))
+                logging.debug('%s classes found in %s' % (len(self.classes), self.apk_path))
                 return self.classes
             except subprocess.CalledProcessError:
+                logging.error('Unable to decode %s' % self.apk_path)
                 raise Exception('Unable to decode the APK')
 
     def detect_trackers_in_list(self, class_list):
@@ -76,7 +138,6 @@ class StaticAnalysis:
         Detect embedded trackers in the provided classes list.
         :return: list of embedded trackers
         """
-        # start = time.time()
         if self.signatures is None:
             self.load_trackers_signatures()
 
@@ -98,10 +159,9 @@ class StaticAnalysis:
 
         for j in range(i):
             threads[j].join()
-
-        # end = time.time()
-        # print('detect_trackers_in_list took %.2f sec.' % (end - start))
-        return [t for t in results if t is not None]
+        trackers = [t for t in results if t is not None]
+        logging.debug('%s trackers detected in %s' % (len(trackers), self.apk_path))
+        return trackers
 
     def detect_trackers(self, class_list_file = None):
         """
@@ -166,20 +226,69 @@ class StaticAnalysis:
         """
         return self.apk.get_app_icon()
 
+    def _get_icon_from_gplay(self, handle, path):
+        """
+        Download the application icon from Google Play website
+        :param handle: application handle
+        :param path: file to be saved
+        :return: path of the saved icon
+        """
+        from bs4 import BeautifulSoup
+        import urllib.request
+
+        address = 'https://play.google.com/store/apps/details?id=%s' % handle
+        text = urllib.request.urlopen(address).read()
+        soup = BeautifulSoup(text, 'html.parser')
+        i = soup.find_all('img', {'class': 'cover-image', 'alt': 'Cover art'})
+        if len(i) > 0:
+            url = '%s' % i[0]['src']
+            if not url.startswith('http'):
+                url = 'https:%s' % url
+            f = urllib.request.urlopen(url)
+            with open(path, mode = 'wb') as fp:
+                fp.write(f.read())
+                return path
+        else:
+            logging.error('Unable to download the icon from Google Play')
+            raise FileNotFoundError('Unable to download the icon')
+
+    @staticmethod
+    def _render_drawable_to_png(self, bxml, path):
+        ap = axml.AXMLPrinter(bxml)
+        print(ap.get_buff())
+
     def save_icon(self, path):
         """
         Extract the icon from the ZIP archive and save it at the given path
         :param path: destination path of the icon
         :return: destination path of the icon, None in case of error
         """
+        from PIL import Image
         icon = self.get_icon_path()
         if icon is None:
             return None
 
         with zipfile.ZipFile(self.apk_path) as z:
-            with open(path, 'wb') as f:
-                f.write(z.read(icon))
-                return path
+            if str(icon).endswith('.xml'):
+                # self._render_drawable_to_png(z.read(icon), path)
+                pass
+            else:
+                with open(path, 'wb') as f:
+                    f.write(z.read(icon))
+        try:
+            _ = Image.open(path)
+            return path
+        except IOError:
+            logging.warning('Unable to get the icon from the APK - downloading from GPlay')
+            try:
+                saved_path = self._get_icon_from_gplay(self.get_package(), path)
+                if os.path.isfile(path) and os.path.getsize(path) > 0:
+                    logging.debug('Icon downloaded from Google Play')
+                    return saved_path
+            except Exception as e:
+                logging.error(e)
+                print(e)
+        return None
 
     def get_icon_phash(self):
         """
@@ -192,10 +301,15 @@ class StaticAnalysis:
         with NamedTemporaryFile() as ic:
             path = self.save_icon(ic.name)
             if path is None:
-                return None
-            image = Image.open(ic.name)
-            row, col = dhash.dhash_row_col(image, size = PHASH_SIZE)
-            return row << (PHASH_SIZE * PHASH_SIZE) | col
+                logging.error('Unable to save the icon')
+                return ''
+            try:
+                image = Image.open(ic.name).convert("RGBA")
+                row, col = dhash.dhash_row_col(image, size = PHASH_SIZE)
+                return row << (PHASH_SIZE * PHASH_SIZE) | col
+            except IOError as e:
+                logging.error(e)
+                return ''
 
     @staticmethod
     def get_icon_similarity(phash_origin, phash_candidate):
@@ -212,19 +326,17 @@ class StaticAnalysis:
     def get_application_universal_id(self):
         parts = [self.get_package()]
         for c in self.get_certificates():
-            parts.append(c.fingerprint)
+            parts.append(c.fingerprint.upper())
         return hashlib.sha1(' '.join(parts).encode('utf-8')).hexdigest().upper()
 
     def get_certificates(self):
         certificates = []
         signs = self.apk.get_signature_names()
         for s in signs:
-            with zipfile.ZipFile(self.apk_path) as z:
-                with tempfile.NamedTemporaryFile(delete = False) as f:
-                    f.write(z.read(s))
-                    f.flush()
-                    c = Certificate(f.name)
-                    certificates.append(c)
+            c = self.apk.get_certificate(s)
+            cert = Certificate(c)
+            certificates.append(cert)
+
         return certificates
 
     def get_apk_size(self):
