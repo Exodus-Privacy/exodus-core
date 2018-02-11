@@ -4,14 +4,11 @@ python:
   - "3.5"
   - "3.6"
 
-before_install:
-  - wget http://fr.archive.ubuntu.com/ubuntu/pool/universe/a/android-platform-dalvik/dexdump_6.0.1+r16-4_amd64.deb -O /tmp/dexdump.deb
-  - sudo dpkg -i /tmp/dexdump.deb
-
 install:
   - "pip install -r requirements.txt"
 
 script:
+  - export PATH="$PATH:$PWD/exodus_core/dexdump/"
   - python -m unittest discover -v -s exodus_core -p "test_*.py"
   - python setup.py sdist
 
