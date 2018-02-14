@@ -19,6 +19,12 @@ Install dependencies:
 ```
 pip install -r requirements.txt
 ```
+
+εxodus core requires dexdump:
+```
+sudo apt install dexdump
+```
+
 Run tests:
 ```
 python -m unittest discover -s exodus_core -p "test_*.py"
