@@ -268,17 +268,13 @@ class StaticAnalysis:
         if icon is None:
             return None
 
-        with zipfile.ZipFile(self.apk_path) as z:
-            if str(icon).endswith('.xml'):
-                # self._render_drawable_to_png(z.read(icon), path)
-                pass
-            else:
+        try:
+            with zipfile.ZipFile(self.apk_path) as z:
                 with open(path, 'wb') as f:
                     f.write(z.read(icon))
-        try:
-            _ = Image.open(path)
-            return path
-        except IOError:
+                _ = Image.open(path)
+                return path
+        except:
             logging.warning('Unable to get the icon from the APK - downloading from GPlay')
             try:
                 saved_path = self._get_icon_from_gplay(self.get_package(), path)
