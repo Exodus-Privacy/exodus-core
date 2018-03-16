@@ -100,7 +100,7 @@ class TestExodus(unittest.TestCase):
         # HSBC
         trackers = list_trackers('./apks/hsbc.apk')
         self.assertIsNotNone(trackers)
-        self.assertEqual(len(trackers), 1)
+        self.assertEqual(len(trackers), 2)
 
     def test_version_code(self):
         # Briar
