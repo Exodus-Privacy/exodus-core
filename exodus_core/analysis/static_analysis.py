@@ -87,9 +87,23 @@ class StaticAnalysis:
         self.apk = None
         self.apk_path = apk_path
         self.signatures = None
+        self.compiled_tracker_signature = None
         self.classes = None
         if apk_path is not None:
             self.load_apk()
+
+    def _compile_signatures(self):
+        """
+        Compiles the regex associated to each signature, in order to speed up
+        the trackers detection.
+        :return: A compiled list of signatures.
+        """
+        self.compiled_tracker_signature = []
+        try:
+            self.compiled_tracker_signature = [re.compile(track.code_signature)
+                                        for track in self.signatures]
+        except TypeError:
+            print("self.signatures is not iterable")
 
     def load_trackers_signatures(self):
         """
@@ -102,6 +116,7 @@ class StaticAnalysis:
             data = json.loads(url.read().decode())
             for e in data['trackers']:
                 self.signatures.append(namedtuple('tracker', data['trackers'][e].keys())(*data['trackers'][e].values()))
+        self._compile_signatures()
         logging.debug('%s trackers signatures loaded' % len(self.signatures))
 
     def load_apk(self):
@@ -141,9 +156,9 @@ class StaticAnalysis:
         if self.signatures is None:
             self.load_trackers_signatures()
 
-        def _detect_tracker(tracker, class_list, results, i):
+        def _detect_tracker(sig, tracker, class_list, results, i):
             for clazz in class_list:
-                m = re.search(tracker.code_signature, clazz)
+                m = sig.search(clazz)
                 if m is not None:
                     results[i] = tracker
             return None
@@ -151,9 +166,10 @@ class StaticAnalysis:
         threads = [None] * len(self.signatures)
         results = [None] * len(self.signatures)
         i = 0
-        for tracker in self.signatures:
+        for (index, tracker) in enumerate(self.signatures):
             if len(tracker.code_signature) > 3:
-                threads[i] = Thread(target = _detect_tracker, args = (tracker, class_list, results, i))
+                sig = self.compiled_tracker_signature[index]
+                threads[i] = Thread(target = _detect_tracker, args = (sig, tracker, class_list, results, i))
                 threads[i].start()
                 i += 1
 
