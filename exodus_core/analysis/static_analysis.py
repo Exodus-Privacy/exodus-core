@@ -133,9 +133,13 @@ class StaticAnalysis:
         """
         if self.classes is not None:
             return self.classes
+
+        class_regex = re.compile(r'classes.*\.dex')
         with tempfile.TemporaryDirectory() as tmp_dir:
             with zipfile.ZipFile(self.apk_path, "r") as apk_zip:
-                apk_zip.extractall(tmp_dir)
+                class_infos = (info for info in apk_zip.infolist() if class_regex.search(info.filename))
+                for info in class_infos:
+                    apk_zip.extract(info, tmp_dir)
             dexdump = which('dexdump')
             cmd = '%s %s/classes*.dex | perl -n -e\'/[A-Z]+((?:\w+\/)+\w+)/ && print "$1\n"\'|sort|uniq' % (
                 dexdump, tmp_dir)
