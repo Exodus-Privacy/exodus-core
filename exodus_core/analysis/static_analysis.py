@@ -382,6 +382,9 @@ class StaticAnalysis:
         """
         Print APK information
         """
+        permissions = self.get_permissions()
+        libraries = self.get_libraries()
+        certificates = self.get_certificates()
         print("=== Information")
         print('- APK path: %s' % self.apk_path)
         print('- APK sum: %s' % self.get_sha256())
@@ -390,13 +393,12 @@ class StaticAnalysis:
         print('- App UID: %s' % self.get_application_universal_id())
         print('- App name: %s' % self.get_app_name())
         print('- App package: %s' % self.get_package())
-        print('- App permissions: %s' % len(self.get_permissions()))
-        for p in self.get_permissions():
+        print('- App permissions: %s' % len(permissions))
+        for p in permissions:
             print('    - %s' % p)
-        print('- App libraries: %s' % len(self.get_libraries()))
-        for l in self.get_libraries():
+        print('- App libraries: %s' % len(libraries))
+        for l in libraries:
             print('    - %s' % l)
-        certificates = self.get_certificates()
         print('- Certificates: %s' % len(certificates))
         for c in certificates:
             print('    - %s' % c)
