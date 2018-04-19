@@ -12,7 +12,7 @@ import zipfile
 from collections import namedtuple
 from hashlib import sha256
 from tempfile import NamedTemporaryFile
-from threading import Thread
+import itertools
 
 from androguard.core.bytecodes import axml
 from androguard.core.bytecodes.apk import APK
@@ -163,25 +163,23 @@ class StaticAnalysis:
         if self.signatures is None:
             self.load_trackers_signatures()
 
-        def _detect_tracker(sig, tracker, class_list, results, i):
+
+        def _detect_tracker(sig, tracker, class_list):
             for clazz in class_list:
-                m = sig.search(clazz)
-                if m is not None:
-                    results[i] = tracker
+                if sig.search(clazz):
+                    return tracker
             return None
 
-        threads = [None] * len(self.signatures)
-        results = [None] * len(self.signatures)
-        i = 0
-        for (index, tracker) in enumerate(self.signatures):
-            if len(tracker.code_signature) > 3:
-                sig = self.compiled_tracker_signature[index]
-                threads[i] = Thread(target = _detect_tracker, args = (sig, tracker, class_list, results, i))
-                threads[i].start()
-                i += 1
+        results = []
+        args = [(self.compiled_tracker_signature[index], tracker, class_list)
+                for (index, tracker) in enumerate(self.signatures) if
+                     len(tracker.code_signature) > 3]
 
-        for j in range(i):
-            threads[j].join()
+
+        for res in itertools.starmap(_detect_tracker, args):
+            if res:
+                results.append(res)
+
         trackers = [t for t in results if t is not None]
         logging.debug('%s trackers detected in %s' % (len(trackers), self.apk_path))
         return trackers
@@ -468,6 +466,9 @@ class StaticAnalysis:
         """
         Print APK information
         """
+        permissions = self.get_permissions()
+        libraries = self.get_libraries()
+        certificates = self.get_certificates()
         print("=== Information")
         print('- APK path: %s' % self.apk_path)
         print('- APK sum: %s' % self.get_sha256())
@@ -476,13 +477,12 @@ class StaticAnalysis:
         print('- App UID: %s' % self.get_application_universal_id())
         print('- App name: %s' % self.get_app_name())
         print('- App package: %s' % self.get_package())
-        print('- App permissions: %s' % len(self.get_permissions()))
-        for p in self.get_permissions():
+        print('- App permissions: %s' % len(permissions))
+        for p in permissions:
             print('    - %s' % p)
-        print('- App libraries: %s' % len(self.get_libraries()))
-        for l in self.get_libraries():
+        print('- App libraries: %s' % len(libraries))
+        for l in libraries:
             print('    - %s' % l)
-        certificates = self.get_certificates()
         print('- Certificates: %s' % len(certificates))
         for c in certificates:
             print('    - %s' % c)
