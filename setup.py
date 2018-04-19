@@ -37,25 +37,24 @@ if which('dexdump') is None:
     print("On Debian-like OS, run sudo apt-get install dexdump")
     sys.exit(1)
 
-with open('requirements.txt') as f:
-    requirements = f.read().splitlines()
-
-# install_requires = [
-#     "requests==2.18.4",
-#     "Pillow==5.0.0",
-#     "dhash==1.3",
-#     "jellyfish==0.5.6",
-#     "beautifulsoup4==4.6.0"
-# ]
+install_requires = [
+    "requests==2.18.4",
+    "Pillow==5.0.0",
+    "dhash==1.3",
+    'gplaycli==3.21',
+    'protobuf==3.5.2.post1',
+    "jellyfish==0.5.6",
+    "beautifulsoup4==4.6.0"
+]
 
 setup(name = 'exodus_core',
-      version = '1.0.10',
+      version = '1.0.11',
       description = 'Core functionality of εxodus',
       author = 'Exodus Privacy',
       author_email = 'contact@exodus-privacy.eu.org',
       url = 'https://github.com/Exodus-Privacy/exodus-core',
       packages = find_packages(exclude = ["*.tests", "*.tests.*", "test*", "tests"]),
-      install_requires = requirements,
+      install_requires = install_requires,
       include_package_data = True,
       zip_safe = False,
       )
