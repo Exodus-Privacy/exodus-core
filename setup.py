@@ -49,7 +49,7 @@ with open('requirements.txt') as f:
 # ]
 
 setup(name = 'exodus_core',
-      version = '1.0.9',
+      version = '1.0.10',
       description = 'Core functionality of εxodus',
       author = 'Exodus Privacy',
       author_email = 'contact@exodus-privacy.eu.org',
