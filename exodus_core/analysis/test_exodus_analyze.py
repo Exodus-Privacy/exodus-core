@@ -49,9 +49,8 @@ class TestExodus(unittest.TestCase):
 
     def test_icon_diff(self):
         phash_4 = phash('./apks/nextcloud.apk')
-        self.assertEqual(phash_4, 304084653533220729994981650157384312320)
+        self.assertEqual(phash_4, 325352301465779383961442563121869825536)
         phash_5 = phash('./apks/francetv.apk')
-        print(phash_5)
         self.assertEqual(phash_5, 277543533468213633177527091973989793792)
         phash_1 = phash('./apks/braiar.apk')
         phash_2 = phash('./apks/whatsapp.apk')
@@ -73,6 +72,8 @@ class TestExodus(unittest.TestCase):
         self.assertEqual(ApkSignature('./apks/braiar.apk').app_uid, '31BE732147F50EA10063BEACFAB2B4D6E0EEFC32')
         self.assertEqual(ApkSignature('./apks/whatsapp.apk').app_uid, 'F799956E176E259FC28EB51AAD2E3519C9033619')
         self.assertEqual(ApkSignature('./apks/hsbc.apk').app_uid, 'E3B4E87A002A37436CC6B008D3B43C0DB1A4FE13')
+        self.assertEqual(ApkSignature('./apks/instapaper.apk').app_uid, '64B99DBA34AFBC3709F75871837465892DF31771')
+        self.assertEqual(ApkSignature('./apks/blooddonation.apk').app_uid, '775AFB467E4EF556A42B28181A70B79BA67B4497')
 
     def test_list_classes(self):
         # Briar
@@ -87,6 +88,10 @@ class TestExodus(unittest.TestCase):
         classes = list_classes('./apks/hsbc.apk')
         self.assertIsNotNone(classes)
         self.assertEqual(len(classes), 7431)
+        # Instapaper
+        classes = list_classes('./apks/instapaper.apk')
+        self.assertIsNotNone(classes)
+        self.assertEqual(len(classes), 2650)
 
     def test_embedded_trackers(self):
         # Briar

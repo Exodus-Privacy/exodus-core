@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import re
+import time
 import subprocess
 import tempfile
 import urllib.request
@@ -17,6 +18,7 @@ from androguard.core.bytecodes import axml
 from androguard.core.bytecodes.apk import APK
 from cryptography.hazmat.primitives import hashes
 from future.moves import sys
+from gplaycli import gplaycli
 
 PHASH_SIZE = 8
 
@@ -89,6 +91,7 @@ class StaticAnalysis:
         self.signatures = None
         self.compiled_tracker_signature = None
         self.classes = None
+        self.app_details = None
         if apk_path is not None:
             self.load_apk()
 
@@ -198,6 +201,7 @@ class StaticAnalysis:
         Get the application version name
         :return: version name
         """
+        self.load_apk()
         return self.apk.get_androidversion_name()
 
     def get_version_code(self):
@@ -205,6 +209,7 @@ class StaticAnalysis:
         Get the application version code
         :return: version code
         """
+        self.load_apk()
         return self.apk.get_androidversion_code()
 
     def get_permissions(self):
@@ -212,6 +217,7 @@ class StaticAnalysis:
         Get application permissions
         :return: application permissions list
         """
+        self.load_apk()
         return self.apk.get_permissions()
 
     def get_app_name(self):
@@ -219,6 +225,7 @@ class StaticAnalysis:
         Get application name
         :return: application name
         """
+        self.load_apk()
         return self.apk.get_app_name()
 
     def get_package(self):
@@ -226,6 +233,7 @@ class StaticAnalysis:
         Get application package
         :return: application package
         """
+        self.load_apk()
         return self.apk.get_package()
 
     def get_libraries(self):
@@ -233,6 +241,7 @@ class StaticAnalysis:
         Get application libraries
         :return: application libraries list
         """
+        self.load_apk()
         return self.apk.get_libraries()
 
     def get_icon_path(self):
@@ -240,7 +249,53 @@ class StaticAnalysis:
         Get the icon path in the ZIP archive
         :return: icon path in the ZIP archive
         """
+        self.load_apk()
         return self.apk.get_app_icon()
+
+    def get_application_details(self):
+        """
+        Get the application details like creator, number of downloads, etc.
+        :param handle: application handle
+        :return: application details dictionary
+        """
+        self.load_apk()
+
+        if self.app_details is not None:
+            return self.app_details
+
+        gpc = gplaycli.GPlaycli()
+        gpc.token_enable = True
+        gpc.token_url = "https://matlink.fr/token/email/gsfid"
+        try:
+            gpc.token, gpc.gsfid = gpc.retrieve_token(force_new = False)
+        except (ConnectionError, ValueError):
+            try:
+                time.sleep(2)
+                gpc.token, gpc.gsfid = gpc.retrieve_token(force_new = True)
+            except (ConnectionError, ValueError) as e:
+                logging.error(e)
+                return None
+        gpc.connect()
+        obj = gpc.api.search(self.get_package(), 1)
+        try:
+            if self.get_package() not in obj[0]['docId']:
+                return None
+            self.app_details = obj[0]
+            return self.app_details
+        except Exception as e:
+            logging.error('Unable to parse applications details')
+            logging.error(e)
+            return None
+
+    def _get_icon_from_details(self, path):
+        details = self.get_application_details()
+        for i in details['images']:
+            if i['imageType'] == 4:
+                f = urllib.request.urlopen(i['url'])
+                with open(path, mode = 'wb') as fp:
+                    fp.write(f.read())
+                    return path
+        return ''
 
     def _get_icon_from_gplay(self, handle, path):
         """
@@ -291,15 +346,22 @@ class StaticAnalysis:
                 _ = Image.open(path)
                 return path
         except:
-            logging.warning('Unable to get the icon from the APK - downloading from GPlay')
+            logging.warning('Unable to get the icon from the APK - downloading from details')
             try:
-                saved_path = self._get_icon_from_gplay(self.get_package(), path)
+                saved_path = self._get_icon_from_details(path)
                 if os.path.isfile(path) and os.path.getsize(path) > 0:
                     logging.debug('Icon downloaded from Google Play')
                     return saved_path
             except Exception as e:
                 logging.error(e)
-                print(e)
+                logging.warning('Unable to get the icon from details - downloading from GPlay')
+                try:
+                    saved_path = self._get_icon_from_gplay(self.get_package(), path)
+                    if os.path.isfile(path) and os.path.getsize(path) > 0:
+                        logging.debug('Icon downloaded from Google Play')
+                        return saved_path
+                except Exception as e:
+                    logging.error(e)
         return None
 
     def get_icon_phash(self):
@@ -343,6 +405,24 @@ class StaticAnalysis:
 
     def get_certificates(self):
         certificates = []
+        import six
+        from cryptography.x509.name import _SENTINEL, ObjectIdentifier, _NAMEOID_DEFAULT_TYPE, _ASN1Type, NameAttribute
+        def _my_name_init(self, oid, value, _type = _SENTINEL):
+            if not isinstance(oid, ObjectIdentifier):
+                raise TypeError("oid argument must be an ObjectIdentifier instance.")
+            if not isinstance(value, six.text_type):
+                raise TypeError("value argument must be a text type.")
+            if len(value) == 0:
+                raise ValueError("Value cannot be an empty string")
+            if _type == _SENTINEL:
+                _type = _NAMEOID_DEFAULT_TYPE.get(oid, _ASN1Type.UTF8String)
+            if not isinstance(_type, _ASN1Type):
+                raise TypeError("_type must be from the _ASN1Type enum")
+            self._oid = oid
+            self._value = value
+            self._type = _type
+        NameAttribute.__init__ = _my_name_init
+
         signs = self.apk.get_signature_names()
         for s in signs:
             c = self.apk.get_certificate(s)
