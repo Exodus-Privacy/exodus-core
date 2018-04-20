@@ -175,7 +175,6 @@ class StaticAnalysis:
                 for (index, tracker) in enumerate(self.signatures) if
                      len(tracker.code_signature) > 3]
 
-
         for res in itertools.starmap(_detect_tracker, args):
             if res:
                 results.append(res)
@@ -278,12 +277,13 @@ class StaticAnalysis:
                 logging.error(e)
                 return None
         gpc.connect()
-        obj = gpc.api.search(self.get_package(), 1)
+        objs = gpc.api.search(self.get_package(), 5)
         try:
-            if self.get_package() not in obj[0]['docId']:
-                return None
-            self.app_details = obj[0]
-            return self.app_details
+            for obj in objs:
+                if self.get_package() == obj['docId']:
+                    self.app_details = obj
+                    return self.app_details
+            return None
         except Exception as e:
             logging.error('Unable to parse applications details')
             logging.error(e)
