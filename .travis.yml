@@ -11,7 +11,9 @@ script:
   - export PATH="$PATH:$PWD/exodus_core/dexdump/"
   - mkdir -p ~/.config/gplaycli/
   - mkdir -p ~/.cache/gplaycli/
+  - rm -rf ~/.cache/gplaycli/*
   - cp ./conf/gplaycli.conf ~/.config/gplaycli/gplaycli.conf
+  - gplaycli -v -s org.briarproject.briar.beta -n 10
   - python -m unittest discover -v -s exodus_core -p "test_*.py"
   - python setup.py sdist
 
