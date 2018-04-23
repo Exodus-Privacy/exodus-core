@@ -44,11 +44,13 @@ install_requires = [
     'gplaycli==3.21',
     'protobuf==3.5.2.post1',
     "jellyfish==0.5.6",
-    "beautifulsoup4==4.6.0"
+    'cryptography==2.2.2',
+    "beautifulsoup4==4.6.0",
+    'androguard==3.1.0'
 ]
 
 setup(name = 'exodus_core',
-      version = '1.0.13',
+      version = '1.0.14',
       description = 'Core functionality of εxodus',
       author = 'Exodus Privacy',
       author_email = 'contact@exodus-privacy.eu.org',
