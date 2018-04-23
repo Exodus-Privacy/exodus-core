@@ -1,3 +1,5 @@
+import os
+
 from exodus_core.analysis.static_analysis import StaticAnalysis
 
 
@@ -14,8 +16,44 @@ class ApkSignature:
         self.app_name = sa.get_app_name()
         self.icon_phash = sa.get_icon_phash()
         self.permissions = sa.get_permissions()
+        self.detailed_permissions = sa.get_detailed_permissions()
         self.app_uid = sa.get_application_universal_id()
         self.certificates = sa.get_certificates()
+        self.trackers = sa.detect_trackers()
+        self.app_details = sa.get_application_details()
+        self.libraries = sa.get_libraries()
+
+    def get(self):
+        return {
+            'apk': {
+                'file': self.apk_path,
+                'size': self.apk_size,
+                'sha256': self.apk_sha256
+            },
+            'application': {
+                'handle': self.handle,
+                'version_code': self.version_code,
+                'version_name': self.version_name,
+                'name': self.app_name,
+                'uaid': self.app_uid,
+                'icon_hash': self.icon_phash,
+                'details': self.app_details
+            },
+            'analysis': {
+                'permissions': self.permissions,
+                'detailed_permissions': self.detailed_permissions,
+                'certificates': self.certificates,
+                'trackers': self.trackers,
+                'libraries': self.libraries
+            }
+        }
+
+    def to_markdown(self):
+        from jinja2 import Template
+        tpl_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'report.md')
+        with open(tpl_path, 'r') as tpl:
+            template = Template(tpl.read())
+            return template.render(obj = self.get())
 
     def __str__(self):
         return 'APK: {0}\n' \
@@ -27,16 +65,16 @@ class ApkSignature:
                'App name: {6}\n' \
                'Icon pHash: {7}\n' \
                'App UID: {8}'.format(
-                    self.apk_path,
-                    self.apk_size,
-                    self.apk_sha256,
-                    self.handle,
-                    self.version_code,
-                    self.version_name,
-                    self.app_name,
-                    self.icon_phash,
-                    self.app_uid
-                )
+            self.apk_path,
+            self.apk_size,
+            self.apk_sha256,
+            self.handle,
+            self.version_code,
+            self.version_name,
+            self.app_name,
+            self.icon_phash,
+            self.app_uid
+        )
 
     def get_icons_similarity(self, candidate):
         return StaticAnalysis.get_icon_similarity(self.icon_phash, candidate.icon_phash)

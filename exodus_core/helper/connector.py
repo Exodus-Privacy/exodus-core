@@ -1,3 +1,5 @@
+from builtins import dict
+
 import requests
 import os
 
@@ -13,7 +15,7 @@ class ExodusConnector:
     >>> exodus.download_apk("/tmp")
     >>> exodus.upload_pcap("/tmp/my_file.pcap")
     """
-    def __init__(self, host, report_info_uri):
+    def __init__(self, host: str, report_info_uri: str):
         """
         Instantiate a new εxodus connector. ``report_info_uri`` is displayed on top of each report when you are
         connected with a superuser account.
@@ -25,7 +27,7 @@ class ExodusConnector:
         self.access_token = ''
         self.report_info = None
 
-    def login(self, username, password):
+    def login(self, username: str, password: str):
         """
         Login with the provided credentials and retrieve an authentication token.
         :param username: username
@@ -38,7 +40,7 @@ class ExodusConnector:
             raise ConnectionError('Unable to login')
         self.access_token = r.json()['token']
 
-    def get_report_info(self):
+    def get_report_info(self) -> dict:
         """
         Retrieve report information like APK download URL, PCAP file upload endpoint, ...
 
@@ -61,7 +63,7 @@ class ExodusConnector:
         self.report_info = r.json()
         return self.report_info
 
-    def download_apk(self, destination):
+    def download_apk(self, destination: str) -> str:
         """
         Download the APK into the provided destination path.
         :param destination: path to store the downloaded APK
@@ -80,7 +82,7 @@ class ExodusConnector:
             raise ConnectionError('Unable to download the APK')
         return local_path
 
-    def upload_pcap(self, pcap_file):
+    def upload_pcap(self, pcap_file: str):
         """
         Upload the given PCAP file. The file has be in the Wireshark PCAP format. Once uploaded, εxodus will
         automatically analyze it.
@@ -95,7 +97,7 @@ class ExodusConnector:
             if ret_code != 200:
                 raise ConnectionError('Unable to upload the PCAP file')
 
-    def upload_flow(self, flow_file):
+    def upload_flow(self, flow_file: str):
         """
         Upload the given PCAP file. The file has be in the MITMDump FLOW format. Once uploaded, εxodus will
         automatically analyze it (not implemented yet).

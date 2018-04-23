@@ -62,14 +62,14 @@ class TestExodus(unittest.TestCase):
         diff_4 = sa.get_icon_similarity(phash_2, phash_2)
         diff_5 = sa.get_icon_similarity(phash_1, phash_3)
         diff_6 = sa.get_icon_similarity(phash_2, phash_3)
-        self.assertEqual(diff_1, 0.7265625)
+        self.assertEqual(diff_1, 0.609375)
         self.assertEqual(diff_1, diff_3)
         self.assertEqual(diff_2, 1.0)
         self.assertEqual(diff_2, diff_4)
         self.assertNotEqual(diff_5, diff_6)
 
     def test_app_uid(self):
-        self.assertEqual(ApkSignature('./apks/braiar.apk').app_uid, '31BE732147F50EA10063BEACFAB2B4D6E0EEFC32')
+        self.assertEqual(ApkSignature('./apks/braiar.apk').app_uid, '38585E1B26493DAB170A08177C6A739D9DB974FE')
         self.assertEqual(ApkSignature('./apks/whatsapp.apk').app_uid, 'F799956E176E259FC28EB51AAD2E3519C9033619')
         self.assertEqual(ApkSignature('./apks/hsbc.apk').app_uid, 'E3B4E87A002A37436CC6B008D3B43C0DB1A4FE13')
         self.assertEqual(ApkSignature('./apks/instapaper.apk').app_uid, '64B99DBA34AFBC3709F75871837465892DF31771')
@@ -79,7 +79,7 @@ class TestExodus(unittest.TestCase):
         # Briar
         classes = list_classes('./apks/braiar.apk')
         self.assertIsNotNone(classes)
-        self.assertEqual(len(classes), 3882)
+        self.assertEqual(len(classes), 3708)
         # Whatsapp
         classes = list_classes('./apks/whatsapp.apk')
         self.assertIsNotNone(classes)
@@ -111,7 +111,7 @@ class TestExodus(unittest.TestCase):
         # Briar
         version = version_code('./apks/braiar.apk')
         self.assertIsNotNone(version)
-        self.assertEqual(int(version), 13)
+        self.assertEqual(int(version), 1620)
         # Whatsapp
         version = version_code('./apks/whatsapp.apk')
         self.assertIsNotNone(version)

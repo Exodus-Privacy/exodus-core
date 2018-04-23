@@ -1,24 +1,25 @@
 import binascii
 import hashlib
+import itertools
 import json
 import logging
 import os
 import re
-import time
 import subprocess
 import tempfile
+import time
 import urllib.request
 import zipfile
 from collections import namedtuple
 from hashlib import sha256
 from tempfile import NamedTemporaryFile
-import itertools
 
-from androguard.core.bytecodes import axml
 from androguard.core.bytecodes.apk import APK
 from cryptography.hazmat.primitives import hashes
 from future.moves import sys
 from gplaycli import gplaycli
+
+from exodus_core.analysis.dvm_permissions import DVM_PERMISSIONS
 
 PHASH_SIZE = 8
 
@@ -40,12 +41,25 @@ def which(program):
 
     return None
 
+
+class ExodusException(Exception):
+    pass
+
+
 class Certificate:
     def __init__(self, cert):
         self.fingerprint = binascii.hexlify(cert.fingerprint(hashes.SHA1())).decode("ascii")
         self.issuer = Certificate.get_Name(cert.issuer, short = False)
         self.subject = Certificate.get_Name(cert.subject, short = False)
         self.serial = cert.serial_number
+
+    def get(self):
+        return {
+            'fingerprint': self.fingerprint,
+            'issuer': self.issuer,
+            'subject': self.subject,
+            'serial': self.serial
+        }
 
     @staticmethod
     def get_Name(name, short = False):
@@ -89,7 +103,7 @@ class StaticAnalysis:
         self.apk = None
         self.apk_path = apk_path
         self.signatures = None
-        self.compiled_tracker_signature = None
+        self.compiled_tracker_signatures = None
         self.classes = None
         self.app_details = None
         if apk_path is not None:
@@ -101,12 +115,54 @@ class StaticAnalysis:
         the trackers detection.
         :return: A compiled list of signatures.
         """
-        self.compiled_tracker_signature = []
+        self.compiled_tracker_signatures = []
         try:
-            self.compiled_tracker_signature = [re.compile(track.code_signature)
-                                        for track in self.signatures]
+            self.compiled_tracker_signatures = [re.compile(track.code_signature)
+                                                for track in self.signatures]
         except TypeError:
-            print("self.signatures is not iterable")
+            raise ExodusException("self.signatures is not iterable")
+
+    def _detect_trackers_in_list(self, class_list):
+        """
+        Detect embedded trackers in the provided classes list.
+        :return: list of embedded trackers
+        """
+        if self.signatures is None:
+            self.load_trackers_signatures()
+
+        def _detect_tracker(sig, tracker, class_list):
+            for clazz in class_list:
+                if sig.search(clazz):
+                    return tracker
+            return None
+
+        results = []
+        args = [(self.compiled_tracker_signatures[index], tracker, class_list)
+                for (index, tracker) in enumerate(self.signatures) if
+                len(tracker.code_signature) > 3]
+
+        for res in itertools.starmap(_detect_tracker, args):
+            if res:
+                results.append(res)
+
+        trackers = [t for t in results if t is not None]
+        logging.debug('%s trackers detected in %s' % (len(trackers), self.apk_path))
+        return trackers
+
+    def _get_icon_from_details(self, path):
+        """
+        Download the application icon from the URL provided in application details
+        :param path: file to be saved
+        :return: path of the saved icon
+        """
+        details = self.get_application_details()
+        for i in details['images']:
+            if i['imageType'] == 4:
+                f = urllib.request.urlopen(i['url'])
+                with open(path, mode = 'wb') as fp:
+                    fp.write(f.read())
+                    return path
+        raise ExodusException('Unable to download the icon')
 
     def load_trackers_signatures(self):
         """
@@ -122,10 +178,12 @@ class StaticAnalysis:
         self._compile_signatures()
         logging.debug('%s trackers signatures loaded' % len(self.signatures))
 
-    def load_apk(self):
+    def load_apk(self, apkpath: str = None):
         """
         Load the APK file.
         """
+        if apkpath is not None:
+            self.apk_path = apkpath
         if self.apk is None:
             self.apk = APK(self.apk_path)
 
@@ -152,36 +210,7 @@ class StaticAnalysis:
                 logging.debug('%s classes found in %s' % (len(self.classes), self.apk_path))
                 return self.classes
             except subprocess.CalledProcessError:
-                logging.error('Unable to decode %s' % self.apk_path)
-                raise Exception('Unable to decode the APK')
-
-    def detect_trackers_in_list(self, class_list):
-        """
-        Detect embedded trackers in the provided classes list.
-        :return: list of embedded trackers
-        """
-        if self.signatures is None:
-            self.load_trackers_signatures()
-
-
-        def _detect_tracker(sig, tracker, class_list):
-            for clazz in class_list:
-                if sig.search(clazz):
-                    return tracker
-            return None
-
-        results = []
-        args = [(self.compiled_tracker_signature[index], tracker, class_list)
-                for (index, tracker) in enumerate(self.signatures) if
-                     len(tracker.code_signature) > 3]
-
-        for res in itertools.starmap(_detect_tracker, args):
-            if res:
-                results.append(res)
-
-        trackers = [t for t in results if t is not None]
-        logging.debug('%s trackers detected in %s' % (len(trackers), self.apk_path))
-        return trackers
+                raise ExodusException('Unable to decode the APK')
 
     def detect_trackers(self, class_list_file = None):
         """
@@ -191,11 +220,11 @@ class StaticAnalysis:
         if self.signatures is None:
             self.load_trackers_signatures()
         if class_list_file is None:
-            return self.detect_trackers_in_list(self.get_embedded_classes())
+            return self._detect_trackers_in_list(self.get_embedded_classes())
         else:
             with open(class_list_file, 'r') as classes_file:
                 classes = classes_file.readlines()
-                return self.detect_trackers_in_list(classes)
+                return self._detect_trackers_in_list(classes)
 
     def get_version(self):
         """
@@ -219,7 +248,29 @@ class StaticAnalysis:
         :return: application permissions list
         """
         self.load_apk()
-        return self.apk.get_permissions()
+        return list(set(self.apk.get_permissions()))
+
+    def get_detailed_permissions(self):
+        """
+        Get application permissions with details
+        :return: application permissions list
+        """
+        self.load_apk()
+        detailed_permissions = []
+        permissions = self.apk.get_permissions()
+        for perm in permissions:
+            level = 'unknown'
+            description = ''
+            short_perm = str(perm).split('.')[-1]
+            if short_perm in DVM_PERMISSIONS["MANIFEST_PERMISSION"]:
+                level =  DVM_PERMISSIONS["MANIFEST_PERMISSION"][short_perm][0]
+                description =  DVM_PERMISSIONS["MANIFEST_PERMISSION"][short_perm][2]
+            detailed_permissions.append({
+                'permission': perm,
+                'protection_level': level,
+                'description': description,
+            })
+        return detailed_permissions
 
     def get_app_name(self):
         """
@@ -243,7 +294,7 @@ class StaticAnalysis:
         :return: application libraries list
         """
         self.load_apk()
-        return self.apk.get_libraries()
+        return [str(l) for l in self.apk.get_libraries()]
 
     def get_icon_path(self):
         """
@@ -275,7 +326,7 @@ class StaticAnalysis:
                 gpc.token, gpc.gsfid = gpc.retrieve_token(force_new = True)
             except (ConnectionError, ValueError) as e:
                 logging.error(e)
-                return None
+                raise ExodusException('Unable to connect to Google Play')
         gpc.connect()
         objs = gpc.api.search(self.get_package(), 5)
         try:
@@ -283,52 +334,10 @@ class StaticAnalysis:
                 if self.get_package() == obj['docId']:
                     self.app_details = obj
                     return self.app_details
-            return None
+            raise ExodusException('Unable to find applications details')
         except Exception as e:
-            logging.error('Unable to parse applications details')
             logging.error(e)
-            return None
-
-    def _get_icon_from_details(self, path):
-        details = self.get_application_details()
-        for i in details['images']:
-            if i['imageType'] == 4:
-                f = urllib.request.urlopen(i['url'])
-                with open(path, mode = 'wb') as fp:
-                    fp.write(f.read())
-                    return path
-        return ''
-
-    def _get_icon_from_gplay(self, handle, path):
-        """
-        Download the application icon from Google Play website
-        :param handle: application handle
-        :param path: file to be saved
-        :return: path of the saved icon
-        """
-        from bs4 import BeautifulSoup
-        import urllib.request
-
-        address = 'https://play.google.com/store/apps/details?id=%s' % handle
-        text = urllib.request.urlopen(address).read()
-        soup = BeautifulSoup(text, 'html.parser')
-        i = soup.find_all('img', {'class': 'cover-image', 'alt': 'Cover art'})
-        if len(i) > 0:
-            url = '%s' % i[0]['src']
-            if not url.startswith('http'):
-                url = 'https:%s' % url
-            f = urllib.request.urlopen(url)
-            with open(path, mode = 'wb') as fp:
-                fp.write(f.read())
-                return path
-        else:
-            logging.error('Unable to download the icon from Google Play')
-            raise FileNotFoundError('Unable to download the icon')
-
-    @staticmethod
-    def _render_drawable_to_png(self, bxml, path):
-        ap = axml.AXMLPrinter(bxml)
-        print(ap.get_buff())
+            raise ExodusException('Unable to parse applications details')
 
     def save_icon(self, path):
         """
@@ -339,7 +348,7 @@ class StaticAnalysis:
         from PIL import Image
         icon = self.get_icon_path()
         if icon is None:
-            return None
+            raise ExodusException('Unable find the icon')
 
         try:
             with zipfile.ZipFile(self.apk_path) as z:
@@ -348,23 +357,14 @@ class StaticAnalysis:
                 _ = Image.open(path)
                 return path
         except:
-            logging.warning('Unable to get the icon from the APK - downloading from details')
+            logging.debug('Unable to get the icon from the APK - downloading from details')
             try:
                 saved_path = self._get_icon_from_details(path)
                 if os.path.isfile(path) and os.path.getsize(path) > 0:
-                    logging.debug('Icon downloaded from Google Play')
                     return saved_path
             except Exception as e:
                 logging.error(e)
-                logging.warning('Unable to get the icon from details - downloading from GPlay')
-                try:
-                    saved_path = self._get_icon_from_gplay(self.get_package(), path)
-                    if os.path.isfile(path) and os.path.getsize(path) > 0:
-                        logging.debug('Icon downloaded from Google Play')
-                        return saved_path
-                except Exception as e:
-                    logging.error(e)
-        return None
+                raise ExodusException('Unable to save the icon')
 
     def get_icon_phash(self):
         """
@@ -377,15 +377,14 @@ class StaticAnalysis:
         with NamedTemporaryFile() as ic:
             path = self.save_icon(ic.name)
             if path is None:
-                logging.error('Unable to save the icon')
-                return ''
+                raise ExodusException('Unable to save the icon')
             try:
                 image = Image.open(ic.name).convert("RGBA")
                 row, col = dhash.dhash_row_col(image, size = PHASH_SIZE)
                 return row << (PHASH_SIZE * PHASH_SIZE) | col
             except IOError as e:
                 logging.error(e)
-                return ''
+                raise ExodusException('Unable to read the icon')
 
     @staticmethod
     def get_icon_similarity(phash_origin, phash_candidate):
@@ -402,13 +401,14 @@ class StaticAnalysis:
     def get_application_universal_id(self):
         parts = [self.get_package()]
         for c in self.get_certificates():
-            parts.append(c.fingerprint.upper())
+            parts.append(c['fingerprint'].upper())
         return hashlib.sha1(' '.join(parts).encode('utf-8')).hexdigest().upper()
 
     def get_certificates(self):
         certificates = []
         import six
         from cryptography.x509.name import _SENTINEL, ObjectIdentifier, _NAMEOID_DEFAULT_TYPE, _ASN1Type, NameAttribute
+
         def _my_name_init(self, oid, value, _type = _SENTINEL):
             if not isinstance(oid, ObjectIdentifier):
                 raise TypeError("oid argument must be an ObjectIdentifier instance.")
@@ -423,12 +423,13 @@ class StaticAnalysis:
             self._oid = oid
             self._value = value
             self._type = _type
+
         NameAttribute.__init__ = _my_name_init
 
         signs = self.apk.get_signature_names()
         for s in signs:
             c = self.apk.get_certificate(s)
-            cert = Certificate(c)
+            cert = Certificate(c).get()
             certificates.append(cert)
 
         return certificates
