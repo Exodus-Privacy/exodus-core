@@ -331,6 +331,7 @@ class StaticAnalysis:
         objs = gpc.api.search(self.get_package(), 5)
         try:
             for obj in objs:
+                # print('%s - %s' % (self.get_package(), obj['docId']))
                 if self.get_package() == obj['docId']:
                     self.app_details = obj
                     return self.app_details

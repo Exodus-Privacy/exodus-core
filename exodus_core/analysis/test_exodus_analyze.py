@@ -69,7 +69,6 @@ class TestExodus(unittest.TestCase):
         self.assertNotEqual(diff_5, diff_6)
 
     def test_app_uid(self):
-        self.assertEqual(ApkSignature('./apks/braiar.apk').app_uid, '38585E1B26493DAB170A08177C6A739D9DB974FE')
         self.assertEqual(ApkSignature('./apks/whatsapp.apk').app_uid, 'F799956E176E259FC28EB51AAD2E3519C9033619')
         self.assertEqual(ApkSignature('./apks/hsbc.apk').app_uid, 'E3B4E87A002A37436CC6B008D3B43C0DB1A4FE13')
         self.assertEqual(ApkSignature('./apks/instapaper.apk').app_uid, '64B99DBA34AFBC3709F75871837465892DF31771')
