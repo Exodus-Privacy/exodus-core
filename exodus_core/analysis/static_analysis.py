@@ -356,12 +356,14 @@ class StaticAnalysis:
                 with open(path, 'wb') as f:
                     f.write(z.read(icon))
                 _ = Image.open(path)
+                print('From APK %s - %s'% (icon, path))
                 return path
         except:
             logging.debug('Unable to get the icon from the APK - downloading from details')
             try:
                 saved_path = self._get_icon_from_details(path)
                 if os.path.isfile(path) and os.path.getsize(path) > 0:
+                    print('From details')
                     return saved_path
             except Exception as e:
                 logging.error(e)
