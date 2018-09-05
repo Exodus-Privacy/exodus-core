@@ -481,7 +481,7 @@ class StaticAnalysis:
         print('- App permissions: %s' % len(permissions))
         for p in permissions:
             print('    - %s' % p)
-        print('- App libraries: %s' % len(libraries))
+        print('- App libraries:')
         for l in libraries:
             print('    - %s' % l)
         print('- Certificates: %s' % len(certificates))
