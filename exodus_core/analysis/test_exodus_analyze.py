@@ -49,7 +49,7 @@ class TestExodus(unittest.TestCase):
 
     def test_icon_diff(self):
         phash_4 = phash('./apks/nextcloud.apk')
-        self.assertEqual(phash_4, 325352301465779383961442563121869825536)
+        self.assertEqual(phash_4, 320077571348578638765208875423858963980)
         phash_5 = phash('./apks/francetv.apk')
         self.assertEqual(phash_5, 277543533468213633177527091973989793792)
         phash_1 = phash('./apks/braiar.apk')

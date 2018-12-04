@@ -309,15 +309,23 @@ class StaticAnalysis:
         from bs4 import BeautifulSoup
         import urllib.request
 
+
         address = 'https://play.google.com/store/apps/details?id=%s' % handle
         text = urllib.request.urlopen(address).read()
         soup = BeautifulSoup(text, 'html.parser')
-        i = soup.find_all('img', {'class': 'cover-image', 'alt': 'Cover art'})
+        i = soup.find_all('img', {'class': 'T75of ujDFqe'})
         if len(i) > 0:
             url = '%s' % i[0]['src']
             if not url.startswith('http'):
                 url = 'https:%s' % url
-            f = urllib.request.urlopen(url)
+            short_url = ""
+            end = False
+            for i in url:
+                if i == "=":
+                    end = True
+                if end == False:
+                    short_url += i
+            f = urllib.request.urlopen(short_url)
             with open(path, mode = 'wb') as fp:
                 fp.write(f.read())
                 return path
@@ -340,7 +348,6 @@ class StaticAnalysis:
         icon = self.get_icon_path()
         if icon is None:
             return None
-
         try:
             with zipfile.ZipFile(self.apk_path) as z:
                 with open(path, 'wb') as f:
@@ -348,7 +355,7 @@ class StaticAnalysis:
                 _ = Image.open(path)
                 return path
         except:
-            logging.warning('Unable to get the icon from the APK - downloading from details')
+            logging.warning('Unable to get the icon from apk files downloading from details'.format(path))
             try:
                 saved_path = self._get_icon_from_details(path)
                 if os.path.isfile(path) and os.path.getsize(path) > 0:
@@ -356,7 +363,7 @@ class StaticAnalysis:
                     return saved_path
             except Exception as e:
                 logging.error(e)
-                logging.warning('Unable to get the icon from details - downloading from GPlay')
+                logging.warning('Unable to get the icon from details - downloading from gplay')
                 try:
                     saved_path = self._get_icon_from_gplay(self.get_package(), path)
                     if os.path.isfile(path) and os.path.getsize(path) > 0:
@@ -364,6 +371,7 @@ class StaticAnalysis:
                         return saved_path
                 except Exception as e:
                     logging.error(e)
+                    logging.warning('Unable to get the icon from GPlay')
         return None
 
     def get_icon_phash(self):
