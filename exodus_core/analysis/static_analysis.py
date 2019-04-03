@@ -307,18 +307,18 @@ class StaticAnalysis:
         :return: path of the saved icon
         """
         from bs4 import BeautifulSoup
-        import urllib.request
+        ICON_CLASS = 'T75of ujDFqe'
 
         address = 'https://play.google.com/store/apps/details?id=%s' % handle
-        text = urllib.request.urlopen(address).read()
-        soup = BeautifulSoup(text, 'html.parser')
-        i = soup.find_all('img', {'class': 'cover-image', 'alt': 'Cover art'})
-        if len(i) > 0:
-            url = '%s' % i[0]['src']
-            if not url.startswith('http'):
-                url = 'https:%s' % url
-            f = urllib.request.urlopen(url)
-            with open(path, mode = 'wb') as fp:
+        gplay_page_content = urllib.request.urlopen(address).read()
+        soup = BeautifulSoup(gplay_page_content, 'html.parser')
+        icon_images = soup.find_all('img', {'class': ICON_CLASS})
+        if len(icon_images) > 0:
+            icon_url = '%s' % icon_images[0]['src']
+            if not icon_url.startswith('http'):
+                icon_url = 'https:%s' % icon_url
+            f = urllib.request.urlopen(icon_url)
+            with open(path, mode='wb') as fp:
                 fp.write(f.read())
                 return path
         else:
