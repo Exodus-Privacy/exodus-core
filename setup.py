@@ -7,7 +7,6 @@ from setuptools import setup, find_packages
 
 
 def which(program):
-    import os
     def is_exe(fpath):
         return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
@@ -49,14 +48,15 @@ install_requires = [
     'androguard==3.1.0'
 ]
 
-setup(name = 'exodus_core',
-      version = '1.0.15',
-      description = 'Core functionality of εxodus',
-      author = 'Exodus Privacy',
-      author_email = 'contact@exodus-privacy.eu.org',
-      url = 'https://github.com/Exodus-Privacy/exodus-core',
-      packages = find_packages(exclude = ["*.tests", "*.tests.*", "test*", "tests"]),
-      install_requires = install_requires,
-      include_package_data = True,
-      zip_safe = False,
-      )
+setup(
+    name='exodus_core',
+    version='1.0.16',
+    description='Core functionality of εxodus',
+    author='Exodus Privacy',
+    author_email='contact@exodus-privacy.eu.org',
+    url='https://github.com/Exodus-Privacy/exodus-core',
+    packages=find_packages(exclude=["*.tests", "*.tests.*", "test*", "tests"]),
+    install_requires=install_requires,
+    include_package_data=True,
+    zip_safe=False,
+)
