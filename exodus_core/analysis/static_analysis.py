@@ -18,6 +18,7 @@ import tempfile
 import time
 import urllib.request
 import zipfile
+import requests
 
 from androguard.core.bytecodes import axml
 from androguard.core.bytecodes.apk import APK
@@ -127,10 +128,10 @@ class StaticAnalysis:
         """
         self.signatures = []
         exodus_url = "https://reports.exodus-privacy.eu.org/api/trackers"
-        with urllib.request.urlopen(exodus_url) as url:
-            data = json.loads(url.read().decode())
-            for e in data['trackers']:
-                self.signatures.append(namedtuple('tracker', data['trackers'][e].keys())(*data['trackers'][e].values()))
+        r = requests.get(exodus_url)
+        data = json.loads(r.text)
+        for e in data['trackers']:
+            self.signatures.append(namedtuple('tracker', data['trackers'][e].keys())(*data['trackers'][e].values()))
         self._compile_signatures()
         logging.debug('%s trackers signatures loaded' % len(self.signatures))
 
