@@ -297,9 +297,9 @@ class StaticAnalysis:
         if details is not None:
             for i in details.get('images'):
                 if i.get('imageType') == 4:
-                    f = urllib.request.urlopen(i.get('url'))
+                    f = requests.get('url')
                     with open(path, mode='wb') as fp:
-                        fp.write(f.read())
+                        fp.write(f.content)
                         if os.path.isfile(path) and os.path.getsize(path) > 0:
                             return path
 
@@ -314,16 +314,16 @@ class StaticAnalysis:
         :raises FileNotFoundError: if unable to download icon
         """
         address = 'https://play.google.com/store/apps/details?id=%s' % handle
-        gplay_page_content = urllib.request.urlopen(address).read()
+        gplay_page_content = requests.get(address).text
         soup = BeautifulSoup(gplay_page_content, 'html.parser')
         icon_images = soup.find_all('img', {'alt': 'Cover art'})
         if len(icon_images) > 0:
             icon_url = '%s' % icon_images[0]['src']
             if not icon_url.startswith('http'):
                 icon_url = 'https:%s' % icon_url
-            f = urllib.request.urlopen(icon_url)
+            f = requests.get(icon_url)
             with open(path, mode='wb') as fp:
-                fp.write(f.read())
+                fp.write(f.content)
                 if os.path.isfile(path) and os.path.getsize(path) > 0:
                     return path
         else:
