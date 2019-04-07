@@ -16,7 +16,6 @@ import six
 import subprocess
 import tempfile
 import time
-import urllib.request
 import zipfile
 import requests
 
