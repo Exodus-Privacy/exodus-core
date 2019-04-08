@@ -128,7 +128,7 @@ class StaticAnalysis:
         self.signatures = []
         exodus_url = "https://reports.exodus-privacy.eu.org/api/trackers"
         r = requests.get(exodus_url)
-        data = json.loads(r.text)
+        data = r.json()
         for e in data['trackers']:
             self.signatures.append(namedtuple('tracker', data['trackers'][e].keys())(*data['trackers'][e].values()))
         self._compile_signatures()
@@ -296,7 +296,7 @@ class StaticAnalysis:
         if details is not None:
             for i in details.get('images'):
                 if i.get('imageType') == 4:
-                    f = requests.get('url')
+                    f = requests.get(i.get('url'))
                     with open(path, mode='wb') as fp:
                         fp.write(f.content)
                         if os.path.isfile(path) and os.path.getsize(path) > 0:
