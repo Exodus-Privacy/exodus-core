@@ -12,12 +12,12 @@ import json
 import logging
 import os
 import re
+import requests
 import six
 import subprocess
 import tempfile
 import time
 import zipfile
-import requests
 
 from androguard.core.bytecodes import axml
 from androguard.core.bytecodes.apk import APK
