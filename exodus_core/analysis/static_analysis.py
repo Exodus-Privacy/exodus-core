@@ -341,12 +341,10 @@ class StaticAnalysis:
         :return: path of the saved icon
         :raises FileNotFoundError: if unable to download icon
         """
-        ICON_CLASS = 'Cover art'
-
         address = 'https://play.google.com/store/apps/details?id=%s' % handle
         gplay_page_content = urllib.request.urlopen(address).read()
         soup = BeautifulSoup(gplay_page_content, 'html.parser')
-        icon_images = soup.find_all('img', {'alt': ICON_CLASS})
+        icon_images = soup.find_all('img', {'alt': 'Cover art'})
         if len(icon_images) > 0:
             icon_url = '%s' % icon_images[0]['src']
             if not icon_url.startswith('http'):
