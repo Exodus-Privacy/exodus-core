@@ -1,10 +1,10 @@
 # εxodus core [![Build Status](https://travis-ci.org/Exodus-Privacy/exodus-core.svg?branch=v1)](https://travis-ci.org/Exodus-Privacy/exodus-core)
 Contains:
-* Static analysis 
+* Static analysis
 * Network analysis
-* Connection helper 
+* Connection helper
 
-## Installation 
+## Installation
 Clone this repository:
 ```
 git clone https://github.com/Exodus-Privacy/exodus-core.git
@@ -16,6 +16,7 @@ sudo apt-get install dexdump
 ```
 Create a `gplaycli` configuration file:
 ```
+mkdir ~/.config/gplaycli
 nano ~/.config/gplaycli/gplaycli.conf
 ```
 containing
@@ -49,7 +50,7 @@ python -m unittest discover -s exodus_core -p "test_*.py"
 ```
 
 ## Include it to your project
-Add the following line in your `requirements.txt`:
+Add the following line in your `requirements.txt` (replace 'XX' by the desired subversion):
 ```
-https://github.com/Exodus-Privacy/exodus-core/releases/download/v1.0.14/exodus_core-1.0.14.tar.gz
+https://github.com/Exodus-Privacy/exodus-core/releases/download/v1.0.XX/exodus_core-1.0.XX.tar.gz
 ```
