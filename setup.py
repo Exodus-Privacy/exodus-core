@@ -37,13 +37,13 @@ if which('dexdump') is None:
     sys.exit(1)
 
 install_requires = [
-    "requests==2.18.4",
+    "requests==2.21.0",
     "Pillow==5.0.0",
     "dhash==1.3",
     'gplaycli==3.21',
     'protobuf==3.5.2.post1',
     "jellyfish==0.5.6",
-    'cryptography==2.2.2',
+    'cryptography==2.6.1',
     "beautifulsoup4==4.6.0",
     'androguard==3.1.0'
 ]
