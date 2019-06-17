@@ -84,11 +84,9 @@ def get_details_from_gplaycli(handle):
 
 class Certificate:
     def __init__(self, cert):
-        self.fingerprint = binascii.hexlify(
-            cert.fingerprint(hashes.SHA1())
-        ).decode("ascii")
-        self.issuer = Certificate.get_Name(cert.issuer, short=False)
-        self.subject = Certificate.get_Name(cert.subject, short=False)
+        self.fingerprint = binascii.hexlify(cert.sha1).decode("ascii")
+        self.issuer = cert.issuer.human_friendly
+        self.subject = cert.subject.human_friendly
         self.serial = cert.serial_number
 
     @staticmethod
