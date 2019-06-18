@@ -28,6 +28,7 @@ from gplaycli import gplaycli
 PHASH_SIZE = 8
 
 
+# TODO: move to utils.py ?
 def which(program):
     import os
 
@@ -70,11 +71,11 @@ def get_details_from_gplaycli(handle):
             logging.error(e)
             return None
     gpc.connect()
-    objs = gpc.api.search(handle, API_SEARCH_LIMIT)
+    gpc_results = gpc.api.search(handle, API_SEARCH_LIMIT)
     try:
-        for obj in objs:
-            if obj['docId'] == handle:
-                return obj
+        for result in gpc_results:
+            if result['docId'] == handle:
+                return result
         return None
     except Exception as e:
         logging.error('Unable to parse applications details')
@@ -82,38 +83,49 @@ def get_details_from_gplaycli(handle):
         return None
 
 
-class Certificate:
-    def __init__(self, cert):
-        self.fingerprint = binascii.hexlify(cert.sha1).decode("ascii")
-        self.issuer = cert.issuer.human_friendly
-        self.subject = cert.subject.human_friendly
-        self.serial = cert.serial_number
+# class Certificate:
+#     def __init__(self, cert):
+#         self.fingerprint = binascii.hexlify(cert.sha1).decode("ascii")
+#         self.issuer = cert.issuer.human_friendly
+#         self.subject = cert.subject.human_friendly
+#         self.serial = cert.serial_number
+#
+#     def __str__(self):
+#         return 'Issuer: %s \n' \
+#                'Subject: %s \n' \
+#                'Fingerprint: %s \n' \
+#                'Serial: %s' % (self.issuer, self.subject, self.fingerprint, self.serial)
 
-    def __str__(self):
-        return 'Issuer: %s \n' \
-               'Subject: %s \n' \
-               'Fingerprint: %s \n' \
-               'Serial: %s' % (self.issuer, self.subject, self.fingerprint, self.serial)
+
+class ExodusCoreException(Exception):
+    pass
 
 
+# TODO: see which elements we need to put as class attributes to avoid calling
+# multiple times class functions
 class StaticAnalysis:
-    def __init__(self, apk_path=None):
-        self.apk = None
-        self.apk_path = apk_path
-        self.signatures = None
-        self.compiled_tracker_signature = None
-        self.classes = None
-        self.app_details = None
-        if apk_path is not None:
-            self.load_apk()
+    def __init__(self, apk_file_path: str = None):
+        self.apk_file_path = apk_file_path
+        # self.signatures = None
+        # self.compiled_tracker_signature = None
+        # self.classes = None
+        # self.app_details = None
+        if apk_file_path and os.path.isfile(apk_file_path):
+            self.apk = APK(self.apk_file_path)
+        else:
+            raise ExodusCoreException("Apk file missing")
+        # if apk_path is not None:
 
-    def _compile_signatures(self):
+    def _compile_tracker_signatures(self):
         """
         Compiles the regex associated to each signature, in order to speed up
         the trackers detection.
         :return: A compiled list of signatures.
         """
-        self.compiled_tracker_signature = []
+        self.compiled_signatures = []
+        # TODO: rename self.signatures (which are in fact tracker objects)
+        for sign in self.signatures:
+            self.compiled_signatures.append(re.compile(sign.code_signature))
         try:
             self.compiled_tracker_signature = [re.compile(track.code_signature)
                                                for track in self.signatures]
@@ -125,21 +137,21 @@ class StaticAnalysis:
         Load trackers signatures from the official Exodus database.
         :return: a dictionary containing signatures.
         """
-        self.signatures = []
         exodus_url = "https://reports.exodus-privacy.eu.org/api/trackers"
         r = requests.get(exodus_url)
         data = r.json()
+        self.signatures = []
         for e in data['trackers']:
             self.signatures.append(namedtuple('tracker', data['trackers'][e].keys())(*data['trackers'][e].values()))
         self._compile_signatures()
-        logging.debug('%s trackers signatures loaded' % len(self.signatures))
+        logging.debug('{} trackers signatures loaded'.format(len(self.signatures)))
 
-    def load_apk(self):
-        """
-        Load the APK file.
-        """
-        if self.apk is None:
-            self.apk = APK(self.apk_path)
+    # def load_apk(self):
+    #     """
+    #     Load the APK file.
+    #     """
+    #     if self.apk:
+    #         self.apk = APK(self.apk_file_path)
 
     def get_embedded_classes(self):
         """
@@ -165,10 +177,10 @@ class StaticAnalysis:
                     shell=True,
                     universal_newlines=True
                 ).splitlines()
-                logging.debug('%s classes found in %s' % (len(self.classes), self.apk_path))
+                logging.debug('{} classes found in {}'.format(len(self.classes), self.apk_path))
                 return self.classes
             except subprocess.CalledProcessError:
-                logging.error('Unable to decode %s' % self.apk_path)
+                logging.error('Unable to decode {}'.format(self.apk_path))
                 raise Exception('Unable to decode the APK')
 
     def detect_trackers_in_list(self, class_list):
@@ -194,8 +206,9 @@ class StaticAnalysis:
             if res:
                 results.append(res)
 
+        # TODO: this basically does `trackers = results`
         trackers = [t for t in results if t is not None]
-        logging.debug('%s trackers detected in %s' % (len(trackers), self.apk_path))
+        logging.debug('{} trackers detected in {}'.format(len(trackers), self.apk_path))
         return trackers
 
     def detect_trackers(self, class_list_file=None):
@@ -212,78 +225,78 @@ class StaticAnalysis:
                 classes = classes_file.readlines()
                 return self.detect_trackers_in_list(classes)
 
-    def get_version(self):
-        """
-        Get the application version name
-        :return: version name
-        """
-        self.load_apk()
-        return self.apk.get_androidversion_name()
+    # def get_version(self):
+    #     """
+    #     Get the application version name
+    #     :return: version name
+    #     """
+    #     self.load_apk()
+    #     return self.apk.get_androidversion_name()
+    #
+    # def get_version_code(self):
+    #     """
+    #     Get the application version code
+    #     :return: version code
+    #     """
+    #     self.load_apk()
+    #     return self.apk.get_androidversion_code()
 
-    def get_version_code(self):
-        """
-        Get the application version code
-        :return: version code
-        """
-        self.load_apk()
-        return self.apk.get_androidversion_code()
+    # def get_permissions(self):
+    #     """
+    #     Get application permissions
+    #     :return: application permissions list
+    #     """
+    #     self.load_apk()
+    #     return self.apk.get_permissions()
 
-    def get_permissions(self):
-        """
-        Get application permissions
-        :return: application permissions list
-        """
-        self.load_apk()
-        return self.apk.get_permissions()
+    # def get_app_name(self):
+    #     """
+    #     Get application name
+    #     :return: application name
+    #     """
+    #     self.load_apk()
+    #     return self.apk.get_app_name()
 
-    def get_app_name(self):
-        """
-        Get application name
-        :return: application name
-        """
-        self.load_apk()
-        return self.apk.get_app_name()
+    # def get_package(self):
+    #     """
+    #     Get application package
+    #     :return: application package
+    #     """
+    #     self.load_apk()
+    #     return self.apk.get_package()
 
-    def get_package(self):
-        """
-        Get application package
-        :return: application package
-        """
-        self.load_apk()
-        return self.apk.get_package()
+    # def get_libraries(self):
+    #     """
+    #     Get application libraries
+    #     :return: application libraries list
+    #     """
+    #     self.load_apk()
+    #     return self.apk.get_libraries()
 
-    def get_libraries(self):
-        """
-        Get application libraries
-        :return: application libraries list
-        """
-        self.load_apk()
-        return self.apk.get_libraries()
+    # def get_icon_path(self):
+    #     """
+    #     Get the icon path in the ZIP archive
+    #     :return: icon path in the ZIP archive
+    #     """
+    #     self.load_apk()
+    #     return self.apk.get_app_icon()
 
-    def get_icon_path(self):
-        """
-        Get the icon path in the ZIP archive
-        :return: icon path in the ZIP archive
-        """
-        self.load_apk()
-        return self.apk.get_app_icon()
-
-    def get_application_details(self):
-        """
-        Get the application details like creator, number of downloads, etc.
-        :param handle: application handle
-        :return: application details dictionary
-        """
-        self.load_apk()
-
-        if self.app_details is not None:
-            return self.app_details
-
-        details = get_details_from_gplaycli(self.get_package())
-        if details is not None:
-            self.app_details = details
-
-        return details
+    # def get_application_details(self):
+    #     """
+    #     Get the application details like creator, number of downloads, etc.
+    #     :param handle: application handle
+    #     :return: application details dictionary
+    #     """
+    #     self.load_apk()
+    #
+    #     if self.app_details is not None:
+    #         return self.app_details
+    #
+    #     details = get_details_from_gplaycli(self.apk.get_package())
+    #     if details is not None:
+    #         self.app_details = details
+    #
+    #     return details
 
     def _get_icon_from_details(self, path):
         """
@@ -292,17 +305,23 @@ class StaticAnalysis:
         :return: icon path
         :raises FileNotFoundError: if unable to find icon
         """
-        details = self.get_application_details()
-        if details is not None:
-            for i in details.get('images'):
-                if i.get('imageType') == 4:
-                    f = requests.get(i.get('url'))
-                    with open(path, mode='wb') as fp:
-                        fp.write(f.content)
-                        if os.path.isfile(path) and os.path.getsize(path) > 0:
-                            return path
+        logging.debug('Downloading icon from details')
 
-        raise FileNotFoundError('Unable to download the icon from details')
+        try:
+            details = self.get_application_details()
+            if details is not None:
+                for i in details.get('images'):
+                    if i.get('imageType') == 4:
+                        f = requests.get(i.get('url'))
+                        with open(path, mode='wb') as fp:
+                            fp.write(f.content)
+                            if os.path.isfile(path) and os.path.getsize(path) > 0:
+                                logging.debug('Icon downloaded from application details')
+                                return path
+        except Exception as e:
+            logging.warning(e)
+
+        return ''
 
     def _get_icon_from_gplay(self, handle, path):
         """
@@ -312,36 +331,36 @@ class StaticAnalysis:
         :return: path of the saved icon
         :raises FileNotFoundError: if unable to download icon
         """
-        address = 'https://play.google.com/store/apps/details?id=%s' % handle
-        gplay_page_content = requests.get(address).text
-        soup = BeautifulSoup(gplay_page_content, 'html.parser')
-        icon_images = soup.find_all('img', {'alt': 'Cover art'})
-        if len(icon_images) > 0:
-            icon_url = '%s' % icon_images[0]['src']
-            if not icon_url.startswith('http'):
-                icon_url = 'https:%s' % icon_url
-            f = requests.get(icon_url)
-            with open(path, mode='wb') as fp:
-                fp.write(f.content)
-                if os.path.isfile(path) and os.path.getsize(path) > 0:
-                    return path
-        else:
-            raise FileNotFoundError('Unable to download the icon from GPlay')
+        logging.debug('Downloading icon from Google Play')
 
-    @staticmethod
-    def _render_drawable_to_png(self, bxml, path):
-        ap = axml.AXMLPrinter(bxml)
-        print(ap.get_buff())
+        try:
+            address = 'https://play.google.com/store/apps/details?id={}'.format(handle)
+            gplay_page_content = requests.get(address).text
+            soup = BeautifulSoup(gplay_page_content, 'html.parser')
+            cover_img = soup.find_all('img', {'alt': 'Cover art'})
+            if len(cover_img) > 0:
+                icon_url = str(cover_img[0]['src'])
+                if not icon_url.startswith('http'):
+                    icon_url = 'https:{}'.format(icon_url)
+                f = requests.get(icon_url)
+                with open(path, mode='wb') as fp:
+                    fp.write(f.content)
+                    if os.path.isfile(path) and os.path.getsize(path) > 0:
+                        logging.debug('Icon downloaded from Google Play')
+                        return path
+        except Exception as e:
+            logging.warning(e)
+        return ''
 
-    def save_icon(self, path):
-        """
-        Extract the icon from the ZIP archive and save it at the given path
-        :param path: destination path of the icon
-        :return: destination path of the icon, None in case of error
-        """
-        icon = self.get_icon_path()
+    # @staticmethod
+    # def _render_drawable_to_png(self, bxml, path):
+    #     ap = axml.AXMLPrinter(bxml)
+    #     print(ap.get_buff())
+
+    def _get_icon_from_manifest(self, path) -> str:
+        icon = self.apk.get_app_icon()
         if icon is None:
-            return None
+            raise ExodusCoreException("No icon in manifest")
 
         try:
             with zipfile.ZipFile(self.apk_path) as z:
@@ -351,24 +370,34 @@ class StaticAnalysis:
                 logging.info('Get icon from APK: success')
                 return path
         except Exception:
-            logging.warning('Unable to get the icon from the APK')
-            logging.warning('Downloading icon from details')
-            try:
-                saved_path = self._get_icon_from_details(path)
-                logging.debug('Icon downloaded from application details')
-                return saved_path
-            except Exception as e:
-                logging.warning(e)
-                logging.warning('Downloading icon from Google Play')
-                try:
-                    saved_path = self._get_icon_from_gplay(self.get_package(), path)
-                    logging.debug('Icon downloaded from Google Play')
-                    return saved_path
-                except Exception as e:
-                    logging.error(e)
-        return None
+            return ''
 
-    def get_icon_phash(self):
+    def _save_icon(self, path):
+        """
+        Extract the icon from the ZIP archive and save it at the given path
+        :param path: destination path of the icon
+        :return: destination path of the icon, None in case of error
+        """
+        try:
+            saved_path = self._get_icon_from_manifest(path)
+            if saved_path:
+                return saved_path
+
+            logging.warning('Unable to get the icon from the APK')
+            saved_path = self._get_icon_from_details(path)
+            if saved_path:
+                return saved_path
+
+            logging.warning('Unable to get the icon from the details')
+            saved_path = self._get_icon_from_gplay(self.apk.get_package(), path)
+            if saved_path:
+                return saved_path
+        except Exception:
+            logging.warning("No icon found")
+
+        raise ExodusCoreException("No icon")
+
+    def _get_icon_phash(self):
         """
         Get the perceptual hash of the application icon
         :return: the perceptual hash, empty string in case of error
@@ -380,6 +409,7 @@ class StaticAnalysis:
                 return ''
             return self.get_phash(ic.name)
 
+    # TODO: move to utils.py ?
     @staticmethod
     def get_phash(image_name):
         """
@@ -387,7 +417,7 @@ class StaticAnalysis:
         :param image_name: name of the image file
         :return: the perceptual hash, empty string in case of error
         """
-        dhash.force_pil()  # Force PIL
+        dhash.force_pil()
 
         try:
             image = Image.open(image_name).convert("RGBA")
@@ -397,71 +427,84 @@ class StaticAnalysis:
             logging.error(e)
             return ''
 
-    @staticmethod
-    def get_icon_similarity(phash_origin, phash_candidate):
-        """
-        Get icons similarity score [0,1.0]
-        :param phash_origin: original icon
-        :param phash_candidate: icon to be compared
-        :return: similarity score [0,1.0]
-        """
-        diff = dhash.get_num_bits_different(phash_origin, phash_candidate)
-        return 1 - 1. * diff / (PHASH_SIZE * PHASH_SIZE * 2)
+    # @staticmethod
+    # def get_icon_similarity(phash_origin, phash_candidate):
+    #     """
+    #     Get icons similarity score [0,1.0]
+    #     :param phash_origin: original icon
+    #     :param phash_candidate: icon to be compared
+    #     :return: similarity score [0,1.0]
+    #     """
+    #     diff = dhash.get_num_bits_different(phash_origin, phash_candidate)
+    #     return 1 - 1. * diff / (PHASH_SIZE * PHASH_SIZE * 2)
 
-    def get_application_universal_id(self):
-        parts = [self.get_package()]
-        for c in self.get_certificates():
-            parts.append(c.fingerprint.upper())
+    def _get_application_universal_id(self):
+        parts = []
+        parts.append(self.apk.get_package())
+        for cert in self._get_certificates():
+            parts.append(cert.fingerprint.upper())
         return hashlib.sha1(' '.join(parts).encode('utf-8')).hexdigest().upper()
 
-    def get_certificates(self):
+    def _get_certificates(self):
         certificates = []
-
-        def _my_name_init(self, oid, value, _type=_SENTINEL):
-            if not isinstance(oid, ObjectIdentifier):
-                raise TypeError("oid argument must be an ObjectIdentifier instance.")
-            if not isinstance(value, six.text_type):
-                raise TypeError("value argument must be a text type.")
-            if len(value) == 0:
-                raise ValueError("Value cannot be an empty string")
-            if _type == _SENTINEL:
-                _type = _NAMEOID_DEFAULT_TYPE.get(oid, _ASN1Type.UTF8String)
-            if not isinstance(_type, _ASN1Type):
-                raise TypeError("_type must be from the _ASN1Type enum")
-            self._oid = oid
-            self._value = value
-            self._type = _type
-        NameAttribute.__init__ = _my_name_init
-
-        signs = self.apk.get_signature_names()
-        for s in signs:
-            c = self.apk.get_certificate(s)
-            cert = Certificate(c)
-            certificates.append(cert)
-
+        for cert in self.apk.get_certificates():
+            certificates.append({
+                'issuer': cert.issuer.human_friendly,
+                'subject': cert.subject.human_friendly,
+                'serial': cert.serial_number,
+                'fingerprint': binascii.hexlify(cert.sha1).decode("ascii"),
+                # 'public_key': cert.public_key,
+                # 'not_after': cert['tbs_certificate']['validity']['not_after'].native,
+                # 'not_before': cert['tbs_certificate']['validity']['not_before'].native
+            })
         return certificates
 
-    def get_apk_size(self):
+        # def _my_name_init(self, oid, value, _type=_SENTINEL):
+        #     if not isinstance(oid, ObjectIdentifier):
+        #         raise TypeError("oid argument must be an ObjectIdentifier instance.")
+        #     if not isinstance(value, six.text_type):
+        #         raise TypeError("value argument must be a text type.")
+        #     if len(value) == 0:
+        #         raise ValueError("Value cannot be an empty string")
+        #     if _type == _SENTINEL:
+        #         _type = _NAMEOID_DEFAULT_TYPE.get(oid, _ASN1Type.UTF8String)
+        #     if not isinstance(_type, _ASN1Type):
+        #         raise TypeError("_type must be from the _ASN1Type enum")
+        #     self._oid = oid
+        #     self._value = value
+        #     self._type = _type
+        # NameAttribute.__init__ = _my_name_init
+        #
+        # signs = self.apk.get_signature_names()
+        # for s in signs:
+        #     c = self.apk.get_certificate(s)
+        #     cert = Certificate(c)
+        #     certificates.append(cert)
+        #
+        # return certificates
+
+    def _get_apk_size(self) -> int:
         """
-        Get the APK file size in bytes
+        Get the APK file size in int
         :return: APK file size
         """
-        return os.path.getsize(self.apk_path)
+        return int(os.path.getsize(self.apk_file_path))
 
-    def get_sha256(self):
+    def _get_apk_sha256(self) -> str:
         """
         Get the sha256sum of the APK file
         :return: hex sha256sum
         """
         BLOCKSIZE = 65536
         hasher = sha256()
-        with open(self.apk_path, 'rb') as apk:
+        with open(self.apk_file_path, 'rb') as apk:
             buf = apk.read(BLOCKSIZE)
             while len(buf) > 0:
                 hasher.update(buf)
                 buf = apk.read(BLOCKSIZE)
-        return hasher.hexdigest()
+        return str(hasher.hexdigest())
 
+    # TODO: get rid of this class? (useless?)
     def save_embedded_classes_in_file(self, file_path):
         """
         Save list of embedded classes in file.
@@ -474,35 +517,53 @@ class StaticAnalysis:
         """
         Print APK information
         """
-        permissions = self.get_permissions()
-        libraries = self.get_libraries()
-        certificates = self.get_certificates()
+        permissions = self.apk.get_permissions()
+        libraries = self.apk.get_libraries()
+        certificates = self._get_certificates()
         print("=== Information")
-        print('- APK path: %s' % self.apk_path)
-        print('- APK sum: %s' % self.get_sha256())
-        print('- App version: %s' % self.get_version())
-        print('- App version code: %s' % self.get_version_code())
-        print('- App UID: %s' % self.get_application_universal_id())
-        print('- App name: %s' % self.get_app_name())
-        print('- App package: %s' % self.get_package())
-        print('- App permissions: %s' % len(permissions))
-        for p in permissions:
-            print('    - %s' % p)
+        print('- APK path: {}'.format(self.apk_path))
+        print('- APK sum: {}'.format(self.get_sha256()))
+        print('- App version: {}'.format(self.get_version()))
+        print('- App version code: {}'.format(self.get_version_code()))
+        print('- App UID: {}'.format(self._get_application_universal_id()))
+        print('- App name: {}'.format(self.get_app_name()))
+        print('- App package: {}'.format(self.apk.get_package()))
+        print('- App permissions: {}'.format(len(permissions)))
+        for perm in permissions:
+            print('    - {}'.format(perm))
         print('- App libraries:')
-        for l in libraries:
-            print('    - %s' % l)
-        print('- Certificates: %s' % len(certificates))
-        for c in certificates:
-            print('    - %s' % c)
+        for lib in libraries:
+            print('    - {}'.format(lib))
+        print('- Certificates: {}'.format(len(certificates)))
+        for cert in certificates:
+            print('    - {}'.format(cert))
+
+    def get_application_fingerprint(self) -> dict:
+        """
+        """
+        app_fingerprint = {
+            'apk_path': self.apk_file_path,
+            'apk_size': self._get_apk_size(),
+            'apk_sha256': self._get_apk_sha256(),
+            'handle': self.apk.get_package(),
+            'version_code': self.apk.get_androidversion_code(),
+            'version_name': self.apk.get_androidversion_name(),
+            'app_name': self.apk.get_app_name(),
+            'icon_phash': self._get_icon_phash(),
+            'permissions': self.apk.get_permissions(),
+            'uaid': self._get_application_universal_id(),
+            'certificates': self._get_certificates()
+        }
+        return app_fingerprint
 
     def print_embedded_trackers(self):
         """
         Print detected trackers
         """
         trackers = self.detect_trackers()
-        print('=== Found trackers: {0}'.format(len(trackers)))
+        print('=== Found trackers: {}'.format(len(trackers)))
         for t in trackers:
-            print(' - %s' % t.name)
+            print(' - {}'.format(t.name))
 
 
 if __name__ == '__main__':
