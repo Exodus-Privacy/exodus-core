@@ -45,12 +45,12 @@ install_requires = [
     "jellyfish==0.5.6",
     'cryptography==2.6.1',
     "beautifulsoup4==4.6.0",
-    'androguard==3.1.0'
+    'androguard==3.3.5'
 ]
 
 setup(
     name='exodus_core',
-    version='1.0.17',
+    version='1.0.18',
     description='Core functionality of εxodus',
     author='Exodus Privacy',
     author_email='contact@exodus-privacy.eu.org',
