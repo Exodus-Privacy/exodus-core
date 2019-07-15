@@ -62,11 +62,11 @@ def get_details_from_gplaycli(handle):
     gpc.token_url = GPLAYCLI_TOKEN_URL
     try:
         gpc.token, gpc.gsfid = gpc.retrieve_token(force_new=False)
-    except (ConnectionError, ValueError):
+    except (Exception, SystemExit):
         try:
             time.sleep(TIME_BEFORE_RETRY)
             gpc.token, gpc.gsfid = gpc.retrieve_token(force_new=True)
-        except (ConnectionError, ValueError) as e:
+        except (Exception, SystemExit) as e:
             logging.error(e)
             return None
     gpc.connect()
