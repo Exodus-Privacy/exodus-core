@@ -299,8 +299,8 @@ class StaticAnalysis:
                     f = requests.get(i.get('url'))
                     with open(path, mode='wb') as fp:
                         fp.write(f.content)
-                        if os.path.isfile(path) and os.path.getsize(path) > 0:
-                            return path
+                    if os.path.isfile(path) and os.path.getsize(path) > 0:
+                        return path
 
         raise FileNotFoundError('Unable to download the icon from details')
 
@@ -323,8 +323,8 @@ class StaticAnalysis:
             f = requests.get(icon_url)
             with open(path, mode='wb') as fp:
                 fp.write(f.content)
-                if os.path.isfile(path) and os.path.getsize(path) > 0:
-                    return path
+            if os.path.isfile(path) and os.path.getsize(path) > 0:
+                return path
         else:
             raise FileNotFoundError('Unable to download the icon from GPlay')
 
