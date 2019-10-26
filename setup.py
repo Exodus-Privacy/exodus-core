@@ -38,7 +38,7 @@ if which('dexdump') is None:
 
 install_requires = [
     "requests==2.21.0",
-    "Pillow==5.0.0",
+    "Pillow==6.2.0",
     "dhash==1.3",
     'gplaycli==3.25',
     'protobuf==3.5.2.post1',
