@@ -50,7 +50,7 @@ install_requires = [
 
 setup(
     name='exodus_core',
-    version='1.0.19',
+    version='1.1.0',
     description='Core functionality of εxodus',
     author='Exodus Privacy',
     author_email='contact@exodus-privacy.eu.org',
