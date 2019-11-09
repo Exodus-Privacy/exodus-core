@@ -27,6 +27,7 @@ from gplaycli import gplaycli
 
 PHASH_SIZE = 8
 
+
 def get_td_url():
     DEFAULT = "https://matlink.fr/token/email/gsfid"
     cred_paths_list = [
@@ -40,14 +41,12 @@ def get_td_url():
             config_file = filepath
             break
     if config_file is None:
-        # Returns a default value
         return DEFAULT
     with open(config_file, mode='r') as c_file:
         for line in c_file:
            match = re.match(r'^token_url=(.*)$', line)
            if match:
                return match.group(1)
-    # Returns a default value
     return DEFAULT
 
 
