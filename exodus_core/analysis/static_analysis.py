@@ -44,9 +44,9 @@ def get_td_url():
         return DEFAULT
     with open(config_file, mode='r') as c_file:
         for line in c_file:
-           match = re.match(r'^token_url=(.*)$', line)
-           if match:
-               return match.group(1)
+            match = re.match(r'^token_url=(.*)$', line)
+            if match:
+                return match.group(1)
     return DEFAULT
 
 
