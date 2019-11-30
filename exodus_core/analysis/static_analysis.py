@@ -1,27 +1,23 @@
 from bs4 import BeautifulSoup
 from collections import namedtuple
 from cryptography.x509.name import _SENTINEL, ObjectIdentifier, _NAMEOID_DEFAULT_TYPE, _ASN1Type, NameAttribute
-from hashlib import sha256
+from hashlib import sha256, sha1
 from PIL import Image
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 import binascii
 import dhash
-import hashlib
 import itertools
-import json
 import logging
 import os
 import re
 import requests
 import six
 import subprocess
-import tempfile
 import time
 import zipfile
 
 from androguard.core.bytecodes import axml
 from androguard.core.bytecodes.apk import APK
-from cryptography.hazmat.primitives import hashes
 from future.moves import sys
 from gplaycli import gplaycli
 
@@ -51,8 +47,6 @@ def get_td_url():
 
 
 def which(program):
-    import os
-
     def is_exe(fpath):
         return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
@@ -171,7 +165,7 @@ class StaticAnalysis:
             return self.classes
 
         class_regex = re.compile(r'classes.*\.dex')
-        with tempfile.TemporaryDirectory() as tmp_dir:
+        with TemporaryDirectory() as tmp_dir:
             with zipfile.ZipFile(self.apk_path, "r") as apk_zip:
                 class_infos = (info for info in apk_zip.infolist() if class_regex.search(info.filename))
                 for info in class_infos:
@@ -311,7 +305,7 @@ class StaticAnalysis:
         Get icon from applications details dictionary
         :param path: path where to write the icon file
         :return: icon path
-        :raises FileNotFoundError: if unable to find icon
+        :raises Exception: if unable to find icon
         """
         details = self.get_application_details()
         if details is not None:
@@ -323,7 +317,7 @@ class StaticAnalysis:
                     if os.path.isfile(path) and os.path.getsize(path) > 0:
                         return path
 
-        raise FileNotFoundError('Unable to download the icon from details')
+        raise Exception('Unable to download the icon from details')
 
     def _get_icon_from_gplay(self, handle, path):
         """
@@ -331,7 +325,7 @@ class StaticAnalysis:
         :param handle: application handle
         :param path: file to be saved
         :return: path of the saved icon
-        :raises FileNotFoundError: if unable to download icon
+        :raises Exception: if unable to download icon
         """
         address = 'https://play.google.com/store/apps/details?id=%s' % handle
         gplay_page_content = requests.get(address).text
@@ -347,7 +341,7 @@ class StaticAnalysis:
             if os.path.isfile(path) and os.path.getsize(path) > 0:
                 return path
         else:
-            raise FileNotFoundError('Unable to download the icon from GPlay')
+            raise Exception('Unable to download the icon from GPlay')
 
     @staticmethod
     def _render_drawable_to_png(self, bxml, path):
@@ -433,7 +427,7 @@ class StaticAnalysis:
         parts = [self.get_package()]
         for c in self.get_certificates():
             parts.append(c.fingerprint.upper())
-        return hashlib.sha1(' '.join(parts).encode('utf-8')).hexdigest().upper()
+        return sha1(' '.join(parts).encode('utf-8')).hexdigest().upper()
 
     def get_certificates(self):
         certificates = []
