@@ -9,13 +9,15 @@ python:
   - 3.7
 
 install:
-  - "pip install -r requirements.txt"
+  - pip install -r requirements.txt
+  - pip install flake8
 
 script:
   - export PATH="$PATH:$PWD/exodus_core/dexdump/"
   - mkdir -p ~/.config/gplaycli/
   - mkdir -p ~/.cache/gplaycli/
   - cp ./conf/gplaycli.conf ~/.config/gplaycli/gplaycli.conf
+  - flake8 exodus_core/analysis/static_analysis.py
   - python -m unittest discover -v -s exodus_core -p "test_*.py"
   - python setup.py sdist
 
