@@ -28,6 +28,28 @@ from gplaycli import gplaycli
 PHASH_SIZE = 8
 
 
+def get_td_url():
+    DEFAULT = "https://matlink.fr/token/email/gsfid"
+    cred_paths_list = [
+        'gplaycli.conf',
+        os.path.expanduser("~") + '/.config/gplaycli/gplaycli.conf',
+        '/etc/gplaycli/gplaycli.conf'
+    ]
+    config_file = None
+    for filepath in cred_paths_list:
+        if os.path.isfile(filepath):
+            config_file = filepath
+            break
+    if config_file is None:
+        return DEFAULT
+    with open(config_file, mode='r') as c_file:
+        for line in c_file:
+            match = re.match(r'^token_url=(.*)$', line)
+            if match:
+                return match.group(1)
+    return DEFAULT
+
+
 def which(program):
     import os
 
@@ -55,11 +77,10 @@ def get_details_from_gplaycli(handle):
     """
     TIME_BEFORE_RETRY = 2
     API_SEARCH_LIMIT = 5
-    GPLAYCLI_TOKEN_URL = "https://matlink.fr/token/email/gsfid"
 
     gpc = gplaycli.GPlaycli()
     gpc.token_enable = True
-    gpc.token_url = GPLAYCLI_TOKEN_URL
+    gpc.token_url = get_td_url()
     try:
         gpc.token, gpc.gsfid = gpc.retrieve_token(force_new=False)
     except (Exception, SystemExit):
