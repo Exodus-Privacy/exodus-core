@@ -69,6 +69,10 @@ def get_details_from_gplaycli(handle):
     :param handle: application handle
     :return: application details dictionary
     """
+
+    # FIXME: Returning None as Gplaycli with token is currently broken
+    return None
+
     TIME_BEFORE_RETRY = 2
     API_SEARCH_LIMIT = 5
 
