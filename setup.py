@@ -40,8 +40,8 @@ install_requires = [
     "requests==2.21.0",
     "Pillow==6.2.0",
     "dhash==1.3",
-    'gplaycli==3.25',
-    'protobuf==3.5.2.post1',
+    'gplaycli==3.26',
+    'protobuf==3.11.0',
     "jellyfish==0.5.6",
     'cryptography==2.6.1',
     "beautifulsoup4==4.6.0",
@@ -50,7 +50,7 @@ install_requires = [
 
 setup(
     name='exodus_core',
-    version='1.1.0',
+    version='1.2.0',
     description='Core functionality of εxodus',
     author='Exodus Privacy',
     author_email='contact@exodus-privacy.eu.org',
