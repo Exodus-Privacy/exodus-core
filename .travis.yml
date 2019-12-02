@@ -1,6 +1,7 @@
 branches:
   only:
   - v1
+  - ^v\d+\.\d+\.\d+(\.\d+)?(-\S*)?$
 
 language: python
 
