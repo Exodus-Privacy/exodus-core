@@ -3,6 +3,7 @@ import os
 
 EXODUS_LOGIN_URI = '/api/get_auth_token/'
 
+
 class ExodusConnector:
     """
     εxodus connector helps you to interact with it.
@@ -31,11 +32,13 @@ class ExodusConnector:
         :param username: username
         :param password: password
         """
-        r = requests.post('%s%s' % (self.host, EXODUS_LOGIN_URI),
-                json={'username':username, 'password':password})
+        r = requests.post(
+            '%s%s' % (self.host, EXODUS_LOGIN_URI),
+            json={'username': username, 'password': password}
+        )
         ret_code = r.status_code
         if ret_code != 200:
-            raise ConnectionError('Unable to login')
+            raise Exception('Unable to login')
         self.access_token = r.json()['token']
 
     def get_report_info(self):
@@ -53,11 +56,14 @@ class ExodusConnector:
 
         :return: dictionary containing report information
         """
-        r=requests.get('%s%s' % (self.host, self.report_info_uri),
-            headers={"Authorization":"Token %s"%self.access_token})
+        r = requests.get(
+            '%s%s' % (self.host, self.report_info_uri),
+            headers={"Authorization": "Token %s" % self.access_token}
+        )
         ret_code = r.status_code
         if ret_code != 200:
-            raise ConnectionError('Unable to get report info')
+            raise Exception('Unable to get report info')
+
         self.report_info = r.json()
         return self.report_info
 
@@ -69,7 +75,11 @@ class ExodusConnector:
         """
         url = '%s%s' % (self.host, self.report_info['apk_dl_link'])
         local_filename = '%s.apk' % self.report_info['handle']
-        r = requests.get(url, stream=True, headers={'Authorization':'Token %s'%self.access_token})
+        r = requests.get(
+            url,
+            stream=True,
+            headers={'Authorization': 'Token %s' % self.access_token}
+        )
         local_path = os.path.join(destination, local_filename)
         with open(local_path, 'wb') as f:
             for chunk in r.iter_content(chunk_size=1024):
@@ -77,7 +87,7 @@ class ExodusConnector:
                     f.write(chunk)
         ret_code = r.status_code
         if ret_code != 200:
-            raise ConnectionError('Unable to download the APK')
+            raise Exception('Unable to download the APK')
         return local_path
 
     def upload_pcap(self, pcap_file):
@@ -88,12 +98,14 @@ class ExodusConnector:
         """
         url = '%s%s' % (self.host, self.report_info['pcap_upload_link'])
         with open(pcap_file, 'rb') as f:
-            r = requests.post(url, files={'file': f},
-                headers={"Authorization":"Token %s"%self.access_token, "Content-Disposition":"attachment; filename=%s"%os.path.basename(pcap_file)}
-                )
+            r = requests.post(
+                url,
+                files={'file': f},
+                headers={"Authorization": "Token %s" % self.access_token, "Content-Disposition": "attachment; filename=%s" % os.path.basename(pcap_file)}
+            )
             ret_code = r.status_code
             if ret_code != 200:
-                raise ConnectionError('Unable to upload the PCAP file')
+                raise Exception('Unable to upload the PCAP file')
 
     def upload_flow(self, flow_file):
         """
@@ -103,9 +115,11 @@ class ExodusConnector:
         """
         url = '%s%s' % (self.host, self.report_info['flow_upload_link'])
         with open(flow_file, 'rb') as f:
-            r = requests.post(url, files={'file': f},
-                headers={"Authorization":"Token %s"%self.access_token, "Content-Disposition":"attachment; filename=%s"%os.path.basename(flow_file)}
-                )
+            r = requests.post(
+                url,
+                files={'file': f},
+                headers={"Authorization": "Token %s" % self.access_token, "Content-Disposition": "attachment; filename=%s" % os.path.basename(flow_file)}
+            )
             ret_code = r.status_code
             if ret_code != 200:
-                raise ConnectionError('Unable to upload the FLOW file')
+                raise Exception('Unable to upload the FLOW file')

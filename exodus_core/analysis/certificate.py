@@ -4,11 +4,11 @@ import re
 import tempfile
 from subprocess import check_output, check_call
 
-from exodus_core.analysis.utils import *
+from exodus_core.analysis.utils import stringToHex, hexToBits
 
 
 class Certificate():
-    def __init__(self, cert_file = None):
+    def __init__(self, cert_file=None):
         self.certFile = None
         self.not_before = None
         self.not_after = None
@@ -73,7 +73,7 @@ class Certificate():
                 pubkey.exponent = pubkeyExponentValParse.group(1)
             else:
                 # e("Unable to parse RSA Key information from openssl.")
-                raise Exception("Bad RSA Key information");
+                raise Exception("Bad RSA Key information")
 
         # Build DSA specific pubkey information
         elif certInfo.find('dsaEncryption') != -1:
@@ -107,9 +107,8 @@ class Certificate():
             # into a temporary file (deleted at end of this with statement).
             # You can't directly access the X509 Certificate fingerprint using
             # the pkcs7 command, requiring these feats of hoop jumping.
-            createCer = check_call(["openssl", "pkcs7", "-inform", "DER",
-                                    "-in", certFile, "-print_certs",
-                                    "-out", tmpFile.name])
+            check_call(["openssl", "pkcs7", "-inform", "DER",
+                        "-in", certFile, "-print_certs", "-out", tmpFile.name])
 
             # Then use the X509 command to get the fingerprint of the PEM certificate.
             certFPOutput = check_output(["openssl", "x509", "-inform", "PEM",
