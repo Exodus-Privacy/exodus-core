@@ -13,13 +13,13 @@ import re
 import requests
 import six
 import subprocess
-import time
+# import time
 import zipfile
 
 from androguard.core.bytecodes import axml
 from androguard.core.bytecodes.apk import APK
 from future.moves import sys
-from gplaycli import gplaycli
+# from gplaycli import gplaycli
 
 PHASH_SIZE = 8
 
@@ -73,32 +73,32 @@ def get_details_from_gplaycli(handle):
     # FIXME: Returning None as Gplaycli with token is currently broken
     return None
 
-    TIME_BEFORE_RETRY = 2
-    API_SEARCH_LIMIT = 5
-
-    gpc = gplaycli.GPlaycli()
-    gpc.token_enable = True
-    gpc.token_url = get_td_url()
-    try:
-        gpc.token, gpc.gsfid = gpc.retrieve_token(force_new=False)
-    except (Exception, SystemExit):
-        try:
-            time.sleep(TIME_BEFORE_RETRY)
-            gpc.token, gpc.gsfid = gpc.retrieve_token(force_new=True)
-        except (Exception, SystemExit) as e:
-            logging.error(e)
-            return None
-    gpc.connect()
-    objs = gpc.api.search(handle, API_SEARCH_LIMIT)
-    try:
-        for obj in objs:
-            if obj['docId'] == handle:
-                return obj
-        return None
-    except Exception as e:
-        logging.error('Unable to parse applications details')
-        logging.error(e)
-        return None
+    # TIME_BEFORE_RETRY = 2
+    # API_SEARCH_LIMIT = 5
+    #
+    # gpc = gplaycli.GPlaycli()
+    # gpc.token_enable = True
+    # gpc.token_url = get_td_url()
+    # try:
+    #     gpc.token, gpc.gsfid = gpc.retrieve_token(force_new=False)
+    # except (Exception, SystemExit):
+    #     try:
+    #         time.sleep(TIME_BEFORE_RETRY)
+    #         gpc.token, gpc.gsfid = gpc.retrieve_token(force_new=True)
+    #     except (Exception, SystemExit) as e:
+    #         logging.error(e)
+    #         return None
+    # gpc.connect()
+    # objs = gpc.api.search(handle, API_SEARCH_LIMIT)
+    # try:
+    #     for obj in objs:
+    #         if obj['docId'] == handle:
+    #             return obj
+    #     return None
+    # except Exception as e:
+    #     logging.error('Unable to parse applications details')
+    #     logging.error(e)
+    #     return None
 
 
 class Certificate:
