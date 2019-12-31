@@ -1,7 +1,6 @@
 language: python
 
 python:
-  - 3.6
   - 3.7
 
 install:
@@ -25,12 +24,21 @@ notifications:
     on_failure: always
 
 deploy:
-  provider: releases
-  api_key:
-    secure: 0fuKzaIHSto7vN3vZPpuotyh+jL3Mzx8du/rGnzz9wq7qnyZ8Rm3zGH8OAg1wzGsDqnh8/QPGOoeGRzwoxxj3A7LlPXGFYs+yO7iz1czv7/3XJDJJz07b6H6h+bbaERYkenR6biDuTRzsQo3YQXUzLV5I+IO3KJYKcLZ023lqbdOBmt7o4/gBFKFbsoZXfmT9ftKPD2+fKuaXfUUp/Ueqp8PE6nc4d8vHuX6DTk09fA+ZQTnGigXpy62jFdAVPmUdxADsxERBRfewSfyMWZsHHsBJD+hNXZXIErcvFyR2UBj+28Zr1sWsjegVavrwk/R2QZEvhcuMxCQBZ61vCJQDyy8+FiRrhXU0MSmJUlkfGIEvbxx/y+bb6GIhyJqbRpkiGus4buk+lnTQxF4yx79AaGcTzpgFUCPFbQxVWSL421WxDagQqHY1FldU9Obypj6LIaBw8PDPUmT4ZRI9n8pzAkxZYVfL/4LZHVJMEdiOnQsCDryXkCV/1iRfje+xEgB71SUtdtWJOTTGYHt9jDpHA8a0Z+nYK1usr2hgochbCQYUgJTIuH49UBxgLBJIOyrO2xZ5G0kbTinPV024L0u0yofpHF8X6Ck6G1i6EbqUXLIqQrWojBA7cdhIt7lr1+BLMpP/i4PZAPgnGhM7Y2hjLTHlfmRwF+3z8qFBUj+rX8=
-  file_glob: true
-  file: dist/*
-  skip_cleanup: true
-  on:
-    repo: Exodus-Privacy/exodus-core
-    tags: true
+  - provider: releases
+    api_key:
+      secure: 0fuKzaIHSto7vN3vZPpuotyh+jL3Mzx8du/rGnzz9wq7qnyZ8Rm3zGH8OAg1wzGsDqnh8/QPGOoeGRzwoxxj3A7LlPXGFYs+yO7iz1czv7/3XJDJJz07b6H6h+bbaERYkenR6biDuTRzsQo3YQXUzLV5I+IO3KJYKcLZ023lqbdOBmt7o4/gBFKFbsoZXfmT9ftKPD2+fKuaXfUUp/Ueqp8PE6nc4d8vHuX6DTk09fA+ZQTnGigXpy62jFdAVPmUdxADsxERBRfewSfyMWZsHHsBJD+hNXZXIErcvFyR2UBj+28Zr1sWsjegVavrwk/R2QZEvhcuMxCQBZ61vCJQDyy8+FiRrhXU0MSmJUlkfGIEvbxx/y+bb6GIhyJqbRpkiGus4buk+lnTQxF4yx79AaGcTzpgFUCPFbQxVWSL421WxDagQqHY1FldU9Obypj6LIaBw8PDPUmT4ZRI9n8pzAkxZYVfL/4LZHVJMEdiOnQsCDryXkCV/1iRfje+xEgB71SUtdtWJOTTGYHt9jDpHA8a0Z+nYK1usr2hgochbCQYUgJTIuH49UBxgLBJIOyrO2xZ5G0kbTinPV024L0u0yofpHF8X6Ck6G1i6EbqUXLIqQrWojBA7cdhIt7lr1+BLMpP/i4PZAPgnGhM7Y2hjLTHlfmRwF+3z8qFBUj+rX8=
+    file_glob: true
+    file: dist/*
+    skip_cleanup: true
+    on:
+      repo: Exodus-Privacy/exodus-core
+      tags: true
+  - provider: pypi
+    user: "__token__"
+    password:
+      secure: pLPye/AMikITU+GfXu1V9qbtxQmWnSavAmi26dsPyi4a84Dk66a3nkkq2ztr9eWOemFLVwI8H2MJGT5XW02zIkljwocPC65GLK3uPtTnPd2TYpU4pdGbvveZBYb//PpuBf5Cjd76QpnxTRU7Ur3n7bk3mZ2yx6LNHNUM1/uijwDyvwTjyojVYYjSjciO6wLQrNeNw+e00Z8IikPRsmyvqfryIiwyGtsCCFlZpGz0uT799qNj1mlrCCREfOWPtJmqJsReyn8sEAqqSenOf3KDNz/sO8ER2uE37MppLHO7ekq5kXJrR8WXp0SiU7LYBnuY5yZGrMbygUHGd+iGNbDdqV9C3FrA4DgvUE0nsd32NL7Cn3XSc1zwlUECB0J+GKFJf5bqrsZj+OQ/oBZxTuQAi50OE62PjmhpQzINBvZvsp5nXfnENiqfzYBqGfFrQmvfi0qPta1nZ/p+f3LknCwnBg7cxpRxe5VcnGzgJHd0VmA22tYyILmGFgGPdqnT6HhmlA5/IofAJzLTy6pJZJvjXetnwpuZEXUUaObuX/dGdDz4TKPc7+K3OP10tDaHbkSkqq5wloBZNjSAVaSMu/PXXaKCBX3uNcq4NUo6/dNUoz8OfVkwiC/spG794N2iObQlzd8+YBi8hLd87oQwfw0oAMex2Q2YoCeINAKE76HPlFE=
+    file_glob: true
+    file: dist/*
+    skip_cleanup: true
+    on:
+      tags: true
