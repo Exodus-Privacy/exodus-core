@@ -5,6 +5,21 @@ Contains:
 * Connection helper
 
 ## Installation
+
+exodus-core is available from [PyPI](https://pypi.org/project/exodus-core):
+```
+pip install exodus-core
+```
+
+## Include it to your project
+
+Add the following line in your `requirements.txt` (replace 'XX' by the desired subversion):
+```
+exodus-core==XX
+```
+
+## Local usage
+
 Clone this repository:
 ```
 git clone https://github.com/Exodus-Privacy/exodus-core.git
@@ -47,10 +62,4 @@ pip install -r requirements.txt
 Run tests:
 ```
 python -m unittest discover -s exodus_core -p "test_*.py"
-```
-
-## Include it to your project
-Add the following line in your `requirements.txt` (replace 'XX' by the desired subversion):
-```
-https://github.com/Exodus-Privacy/exodus-core/releases/download/v1.0.XX/exodus_core-1.0.XX.tar.gz
 ```
