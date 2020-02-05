@@ -12,19 +12,17 @@ import re
 import requests
 import six
 import subprocess
-# import time
 import zipfile
 
+from gpapi.googleplay import GooglePlayAPI
 from androguard.core.bytecodes import axml
 from androguard.core.bytecodes.apk import APK
 from future.moves import sys
-# from gplaycli import gplaycli
 
 PHASH_SIZE = 8
 
 
-def get_td_url():
-    DEFAULT = "https://matlink.fr/token/email/gsfid"
+def get_google_credentials():
     cred_paths_list = [
         'gplaycli.conf',
         os.path.expanduser("~") + '/.config/gplaycli/gplaycli.conf',
@@ -35,14 +33,55 @@ def get_td_url():
         if os.path.isfile(filepath):
             config_file = filepath
             break
+
     if config_file is None:
-        return DEFAULT
+        return {}
+
+    creds = {}
     with open(config_file, mode='r') as c_file:
         for line in c_file:
-            match = re.match(r'^token_url=(.*)$', line)
-            if match:
-                return match.group(1)
-    return DEFAULT
+            match_username = re.match(r'^gmail_address=(.*)$', line)
+            if match_username:
+                creds['username'] = match_username.group(1)
+
+            match_password = re.match(r'^gmail_password=(.*)$', line)
+            if match_password:
+                creds['password'] = match_password.group(1)
+
+            if creds.get('username') and creds.get('password'):
+                break
+
+    return creds
+
+
+def get_details_from_gpapi(handle):
+    """
+    Get the details from gpapi like creator, number of downloads, etc
+    :param handle: application handle
+    :return: application details dictionary
+    """
+    creds = get_google_credentials()
+    if not creds:
+        logging.warning("No Google credentials found")
+        return None
+
+    try:
+        api = GooglePlayAPI()
+        api.login(email=creds['username'], password=creds['password'])
+
+        result = api.search(handle)
+    except Exception as e:
+        logging.warning(e)
+        return None
+
+    for doc in result:
+        for cluster in doc["child"]:
+            for app in cluster["child"]:
+                if app["docid"] == handle:
+                    return app
+
+    logging.warning("Application details not found")
+    return None
 
 
 def which(program):
@@ -60,44 +99,6 @@ def which(program):
                 return exe_file
 
     return None
-
-
-def get_details_from_gplaycli(handle):
-    """
-    Get the details from gpc like creator, number of downloads, etc
-    :param handle: application handle
-    :return: application details dictionary
-    """
-
-    # FIXME: Returning None as Gplaycli with token is currently broken
-    return None
-
-    # TIME_BEFORE_RETRY = 2
-    # API_SEARCH_LIMIT = 5
-    #
-    # gpc = gplaycli.GPlaycli()
-    # gpc.token_enable = True
-    # gpc.token_url = get_td_url()
-    # try:
-    #     gpc.token, gpc.gsfid = gpc.retrieve_token(force_new=False)
-    # except (Exception, SystemExit):
-    #     try:
-    #         time.sleep(TIME_BEFORE_RETRY)
-    #         gpc.token, gpc.gsfid = gpc.retrieve_token(force_new=True)
-    #     except (Exception, SystemExit) as e:
-    #         logging.error(e)
-    #         return None
-    # gpc.connect()
-    # objs = gpc.api.search(handle, API_SEARCH_LIMIT)
-    # try:
-    #     for obj in objs:
-    #         if obj['docId'] == handle:
-    #             return obj
-    #     return None
-    # except Exception as e:
-    #     logging.error('Unable to parse applications details')
-    #     logging.error(e)
-    #     return None
 
 
 class Certificate:
@@ -297,7 +298,7 @@ class StaticAnalysis:
         if self.app_details is not None:
             return self.app_details
 
-        details = get_details_from_gplaycli(self.get_package())
+        details = get_details_from_gpapi(self.get_package())
         if details is not None:
             self.app_details = details
 
@@ -310,6 +311,7 @@ class StaticAnalysis:
         :return: icon path
         :raises Exception: if unable to find icon
         """
+        # FIXME: verify this works with gpapi details
         details = self.get_application_details()
         if details is not None:
             for i in details.get('images'):
@@ -345,9 +347,8 @@ class StaticAnalysis:
                     return path
         except Exception:
             logging.warning('Unable to get the icon from the APK')
-            return None
 
-            # TODO: Set this back once details download is working again
+            # FIXME: I found some weird images from details, to be confirmed
             # logging.warning('Downloading icon from details')
             # try:
             #     saved_path = self._get_icon_from_details(path)
@@ -355,6 +356,15 @@ class StaticAnalysis:
             #     return saved_path
             # except Exception as e:
             #     logging.warning(e)
+
+            logging.warning('Downloading icon from Google Play')
+            try:
+                saved_path = self._get_icon_from_gplay(self.get_package(), path)
+                logging.debug('Icon downloaded from Google Play')
+                return saved_path
+            except Exception as e:
+                logging.error(e)
+        return None
 
     def get_icon_phash(self):
         """
