@@ -109,10 +109,10 @@ class Certificate:
         self.serial = cert.serial_number
 
     def __str__(self):
-        return 'Issuer: %s \n' \
-               'Subject: %s \n' \
-               'Fingerprint: %s \n' \
-               'Serial: %s' % (self.issuer, self.subject, self.fingerprint, self.serial)
+        return 'Issuer: {} \n' \
+               'Subject: {} \n' \
+               'Fingerprint: {} \n' \
+               'Serial: {}'.format(self.issuer, self.subject, self.fingerprint, self.serial)
 
 
 class StaticAnalysis:
