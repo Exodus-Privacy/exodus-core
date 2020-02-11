@@ -151,7 +151,7 @@ class StaticAnalysis:
         for e in data['trackers']:
             self.signatures.append(namedtuple('tracker', data['trackers'][e].keys())(*data['trackers'][e].values()))
         self._compile_signatures()
-        logging.debug('%s trackers signatures loaded' % len(self.signatures))
+        logging.debug('{} trackers signatures loaded'.format(len(self.signatures)))
 
     def load_apk(self):
         """
