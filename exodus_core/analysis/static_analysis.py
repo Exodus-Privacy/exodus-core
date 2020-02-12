@@ -497,22 +497,22 @@ class StaticAnalysis:
         libraries = self.get_libraries()
         certificates = self.get_certificates()
         print("=== Information")
-        print('- APK path: %s' % self.apk_path)
-        print('- APK sum: %s' % self.get_sha256())
-        print('- App version: %s' % self.get_version())
-        print('- App version code: %s' % self.get_version_code())
-        print('- App UID: %s' % self.get_application_universal_id())
-        print('- App name: %s' % self.get_app_name())
-        print('- App package: %s' % self.get_package())
-        print('- App permissions: %s' % len(permissions))
+        print('- APK path: {}'.format(self.apk_path))
+        print('- APK sum: {}'.format(self.get_sha256()))
+        print('- App version: {}'.format(self.get_version()))
+        print('- App version code: {}'.format(self.get_version_code()))
+        print('- App UID: {}'.format(self.get_application_universal_id()))
+        print('- App name: {}'.format(self.get_app_name()))
+        print('- App package: {}'.format(self.get_package()))
+        print('- App permissions: {}'.format(len(permissions)))
         for p in permissions:
-            print('    - %s' % p)
+            print('    - {}'.format(p))
         print('- App libraries:')
         for l in libraries:
-            print('    - %s' % l)
-        print('- Certificates: %s' % len(certificates))
+            print('    - {}'.format(l))
+        print('- Certificates: {}'.format(len(certificates)))
         for c in certificates:
-            print('    - %s' % c)
+            print('    - {}'.format(c))
 
     def print_embedded_trackers(self):
         """
