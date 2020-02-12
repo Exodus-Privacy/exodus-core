@@ -336,9 +336,9 @@ class StaticAnalysis:
         soup = BeautifulSoup(gplay_page_content, 'html.parser')
         icon_images = soup.find_all('img', {'alt': 'Cover art'})
         if len(icon_images) > 0:
-            icon_url = '%s' % icon_images[0]['src']
+            icon_url = '{}'.format(icon_images[0]['src'])
             if not icon_url.startswith('http'):
-                icon_url = 'https:%s' % icon_url
+                icon_url = 'https:{}'.format(icon_url)
             f = requests.get(icon_url)
             with open(path, mode='wb') as fp:
                 fp.write(f.content)
