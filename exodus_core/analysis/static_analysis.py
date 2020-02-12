@@ -519,9 +519,9 @@ class StaticAnalysis:
         Print detected trackers
         """
         trackers = self.detect_trackers()
-        print('=== Found trackers: {0}'.format(len(trackers)))
+        print('=== Found trackers: {}'.format(len(trackers)))
         for t in trackers:
-            print(' - %s' % t.name)
+            print(' - {}'.format(t.name))
 
 
 if __name__ == '__main__':
