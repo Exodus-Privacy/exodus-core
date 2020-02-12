@@ -175,7 +175,7 @@ class StaticAnalysis:
                 for info in class_infos:
                     apk_zip.extract(info, tmp_dir)
             dexdump = which('dexdump')
-            cmd = '%s %s/classes*.dex | perl -n -e\'/[A-Z]+((?:\w+\/)+\w+)/ && print "$1\n"\'|sort|uniq' % (
+            cmd = '{} {}/classes*.dex | perl -n -e\'/[A-Z]+((?:\w+\/)+\w+)/ && print "$1\n"\'|sort|uniq'.format(
                 dexdump, tmp_dir)
             try:
                 self.classes = subprocess.check_output(
@@ -184,10 +184,10 @@ class StaticAnalysis:
                     shell=True,
                     universal_newlines=True
                 ).splitlines()
-                logging.debug('%s classes found in %s' % (len(self.classes), self.apk_path))
+                logging.debug('{} classes found in {}'.format(len(self.classes), self.apk_path))
                 return self.classes
             except subprocess.CalledProcessError:
-                logging.error('Unable to decode %s' % self.apk_path)
+                logging.error('Unable to decode {}'.format(self.apk_path))
                 raise Exception('Unable to decode the APK')
 
     def detect_trackers_in_list(self, class_list):
