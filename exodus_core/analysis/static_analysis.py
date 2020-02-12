@@ -214,7 +214,7 @@ class StaticAnalysis:
                 results.append(res)
 
         trackers = [t for t in results if t is not None]
-        logging.debug('%s trackers detected in %s' % (len(trackers), self.apk_path))
+        logging.debug('{} trackers detected in {}'.format(len(trackers), self.apk_path))
         return trackers
 
     def detect_trackers(self, class_list_file=None):
