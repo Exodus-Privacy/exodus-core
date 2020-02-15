@@ -109,10 +109,10 @@ class Certificate:
         self.serial = cert.serial_number
 
     def __str__(self):
-        return 'Issuer: %s \n' \
-               'Subject: %s \n' \
-               'Fingerprint: %s \n' \
-               'Serial: %s' % (self.issuer, self.subject, self.fingerprint, self.serial)
+        return 'Issuer: {} \n' \
+               'Subject: {} \n' \
+               'Fingerprint: {} \n' \
+               'Serial: {}'.format(self.issuer, self.subject, self.fingerprint, self.serial)
 
 
 class StaticAnalysis:
@@ -151,7 +151,7 @@ class StaticAnalysis:
         for e in data['trackers']:
             self.signatures.append(namedtuple('tracker', data['trackers'][e].keys())(*data['trackers'][e].values()))
         self._compile_signatures()
-        logging.debug('%s trackers signatures loaded' % len(self.signatures))
+        logging.debug('{} trackers signatures loaded'.format(len(self.signatures)))
 
     def load_apk(self):
         """
@@ -175,7 +175,7 @@ class StaticAnalysis:
                 for info in class_infos:
                     apk_zip.extract(info, tmp_dir)
             dexdump = which('dexdump')
-            cmd = '%s %s/classes*.dex | perl -n -e\'/[A-Z]+((?:\w+\/)+\w+)/ && print "$1\n"\'|sort|uniq' % (
+            cmd = '{} {}/classes*.dex | perl -n -e\'/[A-Z]+((?:\w+\/)+\w+)/ && print "$1\n"\'|sort|uniq'.format(
                 dexdump, tmp_dir)
             try:
                 self.classes = subprocess.check_output(
@@ -184,10 +184,10 @@ class StaticAnalysis:
                     shell=True,
                     universal_newlines=True
                 ).splitlines()
-                logging.debug('%s classes found in %s' % (len(self.classes), self.apk_path))
+                logging.debug('{} classes found in {}'.format(len(self.classes), self.apk_path))
                 return self.classes
             except subprocess.CalledProcessError:
-                logging.error('Unable to decode %s' % self.apk_path)
+                logging.error('Unable to decode {}'.format(self.apk_path))
                 raise Exception('Unable to decode the APK')
 
     def detect_trackers_in_list(self, class_list):
@@ -214,7 +214,7 @@ class StaticAnalysis:
                 results.append(res)
 
         trackers = [t for t in results if t is not None]
-        logging.debug('%s trackers detected in %s' % (len(trackers), self.apk_path))
+        logging.debug('{} trackers detected in {}'.format(len(trackers), self.apk_path))
         return trackers
 
     def detect_trackers(self, class_list_file=None):
@@ -336,9 +336,9 @@ class StaticAnalysis:
         soup = BeautifulSoup(gplay_page_content, 'html.parser')
         icon_images = soup.find_all('img', {'alt': 'Cover art'})
         if len(icon_images) > 0:
-            icon_url = '%s' % icon_images[0]['src']
+            icon_url = '{}'.format(icon_images[0]['src'])
             if not icon_url.startswith('http'):
-                icon_url = 'https:%s' % icon_url
+                icon_url = 'https:{}'.format(icon_url)
             f = requests.get(icon_url)
             with open(path, mode='wb') as fp:
                 fp.write(f.content)
@@ -497,31 +497,31 @@ class StaticAnalysis:
         libraries = self.get_libraries()
         certificates = self.get_certificates()
         print("=== Information")
-        print('- APK path: %s' % self.apk_path)
-        print('- APK sum: %s' % self.get_sha256())
-        print('- App version: %s' % self.get_version())
-        print('- App version code: %s' % self.get_version_code())
-        print('- App UID: %s' % self.get_application_universal_id())
-        print('- App name: %s' % self.get_app_name())
-        print('- App package: %s' % self.get_package())
-        print('- App permissions: %s' % len(permissions))
+        print('- APK path: {}'.format(self.apk_path))
+        print('- APK sum: {}'.format(self.get_sha256()))
+        print('- App version: {}'.format(self.get_version()))
+        print('- App version code: {}'.format(self.get_version_code()))
+        print('- App UID: {}'.format(self.get_application_universal_id()))
+        print('- App name: {}'.format(self.get_app_name()))
+        print('- App package: {}'.format(self.get_package()))
+        print('- App permissions: {}'.format(len(permissions)))
         for p in permissions:
-            print('    - %s' % p)
+            print('    - {}'.format(p))
         print('- App libraries:')
         for l in libraries:
-            print('    - %s' % l)
-        print('- Certificates: %s' % len(certificates))
+            print('    - {}'.format(l))
+        print('- Certificates: {}'.format(len(certificates)))
         for c in certificates:
-            print('    - %s' % c)
+            print('    - {}'.format(c))
 
     def print_embedded_trackers(self):
         """
         Print detected trackers
         """
         trackers = self.detect_trackers()
-        print('=== Found trackers: {0}'.format(len(trackers)))
+        print('=== Found trackers: {}'.format(len(trackers)))
         for t in trackers:
-            print(' - %s' % t.name)
+            print(' - {}'.format(t.name))
 
 
 if __name__ == '__main__':
