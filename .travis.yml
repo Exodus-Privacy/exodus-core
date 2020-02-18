@@ -8,7 +8,6 @@ install:
   - pip install flake8==3.8.2
 
 script:
-  - export PATH="$PATH:$PWD/exodus_core/dexdump/"
   - flake8
   - python -m unittest discover -v -s exodus_core -p "test_*.py"
   - python setup.py sdist
