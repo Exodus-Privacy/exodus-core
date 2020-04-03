@@ -358,11 +358,10 @@ class StaticAnalysis:
         :param path: destination path of the icon
         :return: destination path of the icon, None in case of error
         """
-        icon = self.get_icon_path()
-        if icon is None:
-            return None
-
         try:
+            icon = self.get_icon_path()
+            if icon is None:
+                raise Exception('Unable to get icon path')
             with zipfile.ZipFile(self.apk_path) as z:
                 with open(path, 'wb') as f:
                     f.write(z.read(icon))
@@ -371,20 +370,21 @@ class StaticAnalysis:
                 return path
         except Exception:
             logging.warning('Unable to get the icon from the APK')
-            logging.warning('Downloading icon from details')
+            # TODO: Set this back once details download is working again
+            # logging.warning('Downloading icon from details')
+            # try:
+            #     saved_path = self._get_icon_from_details(path)
+            #     logging.debug('Icon downloaded from application details')
+            #     return saved_path
+            # except Exception as e:
+            #     logging.warning(e)
+            logging.warning('Downloading icon from Google Play')
             try:
-                saved_path = self._get_icon_from_details(path)
-                logging.debug('Icon downloaded from application details')
+                saved_path = self._get_icon_from_gplay(self.get_package(), path)
+                logging.debug('Icon downloaded from Google Play')
                 return saved_path
             except Exception as e:
-                logging.warning(e)
-                logging.warning('Downloading icon from Google Play')
-                try:
-                    saved_path = self._get_icon_from_gplay(self.get_package(), path)
-                    logging.debug('Icon downloaded from Google Play')
-                    return saved_path
-                except Exception as e:
-                    logging.error(e)
+                logging.error(e)
         return None
 
     def get_icon_phash(self):
