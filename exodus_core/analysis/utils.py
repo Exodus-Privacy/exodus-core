@@ -30,4 +30,4 @@ def hexToBits(hexString):
 
 
 def stringToHex(hexString):
-    return "".join([l.strip().replace(':', '') for l in hexString])
+    return "".join([line.strip().replace(':', '') for line in hexString])

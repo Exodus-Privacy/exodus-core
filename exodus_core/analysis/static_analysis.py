@@ -505,14 +505,14 @@ class StaticAnalysis:
         print('- App name: {}'.format(self.get_app_name()))
         print('- App package: {}'.format(self.get_package()))
         print('- App permissions: {}'.format(len(permissions)))
-        for p in permissions:
-            print('    - {}'.format(p))
+        for perm in permissions:
+            print('    - {}'.format(perm))
         print('- App libraries:')
-        for l in libraries:
-            print('    - {}'.format(l))
+        for lib in libraries:
+            print('    - {}'.format(lib))
         print('- Certificates: {}'.format(len(certificates)))
-        for c in certificates:
-            print('    - {}'.format(c))
+        for cert in certificates:
+            print('    - {}'.format(cert))
 
     def print_embedded_trackers(self):
         """
