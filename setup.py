@@ -44,7 +44,6 @@ install_requires = [
     'protobuf==3.11.0',
     "jellyfish==0.5.6",
     'cryptography==2.6.1',
-    "beautifulsoup4==4.6.0",
     'androguard==3.3.5'
 ]
 

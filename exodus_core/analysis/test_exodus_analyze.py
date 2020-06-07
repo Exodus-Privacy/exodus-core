@@ -51,7 +51,7 @@ class TestExodus(unittest.TestCase):
         self.assertGreater(len(sa.signatures), 70)
 
     def test_icon_phash_greater_than_zero(self):
-        apps = ['nextcloud', 'francetv']
+        apps = ['francetv']
         for app in apps:
             with self.subTest(app=app):
                 icon_phash = phash('./apks/{}.apk'.format(app))

@@ -1,8 +1,6 @@
-from bs4 import BeautifulSoup
 from collections import namedtuple
 from cryptography.x509.name import _SENTINEL, ObjectIdentifier, _NAMEOID_DEFAULT_TYPE, _ASN1Type, NameAttribute
 from hashlib import sha256, sha1
-from pathlib import Path
 from PIL import Image
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 import binascii
@@ -15,7 +13,6 @@ import requests
 import six
 import subprocess
 # import time
-import xml.etree.ElementTree as ET
 import zipfile
 
 from androguard.core.bytecodes import axml
@@ -325,78 +322,15 @@ class StaticAnalysis:
 
         raise Exception('Unable to download the icon from details')
 
-    def _get_icon_from_store(self, path, source):
-        if source == "fdroid":
-            saved_path = self._get_icon_from_fdroid(path)
-        else:
-            saved_path = self._get_icon_from_gplay(path)
-
-        return saved_path
-
-    def _get_icon_from_fdroid(self, path):
-        """
-        Download the application icon from F-Droid website
-        :param path: file to be saved
-        :return: path of the saved icon
-        :raises Exception: if unable to download icon
-        """
-        handle = self.get_package()
-        index_file_path = '{}/.exodus/index.xml'.format(Path.home())
-        if not os.path.isfile(index_file_path):
-            raise Exception('Unable to download the icon from fdroid')
-
-        tree = ET.parse(index_file_path)
-        root = tree.getroot()
-        for child in root:
-            if child.tag != 'repo':
-                if child.attrib['id'] == handle:
-                    icon = child.find('icon').text
-                    icon_url = 'https://f-droid.org/repo/icons-640/{}'.format(icon)
-
-                    f = requests.get(icon_url)
-                    with open(path, mode='wb') as fp:
-                        fp.write(f.content)
-                    if os.path.isfile(path) and os.path.getsize(path) > 0:
-                        return path
-                    else:
-                        break
-
-        raise Exception('Unable to download the icon from fdroid')
-
-    def _get_icon_from_gplay(self, path):
-        """
-        Download the application icon from Google Play website
-        :param path: file to be saved
-        :return: path of the saved icon
-        :raises Exception: if unable to download icon
-        """
-        handle = self.get_package()
-        address = 'https://play.google.com/store/apps/details?id=%s' % handle
-        gplay_page_content = requests.get(address).text
-        soup = BeautifulSoup(gplay_page_content, 'html.parser')
-        icon_images = soup.find_all('img', {'alt': 'Cover art'})
-        if len(icon_images) > 0:
-            icon_url = '{}'.format(icon_images[0]['src'])
-            if not icon_url.startswith('http'):
-                icon_url = 'https:{}'.format(icon_url)
-            f = requests.get(icon_url)
-            with open(path, mode='wb') as fp:
-                fp.write(f.content)
-            if os.path.isfile(path) and os.path.getsize(path) > 0:
-                return path
-        else:
-            raise Exception('Unable to download the icon from GPlay')
-
     @staticmethod
     def _render_drawable_to_png(self, bxml, path):
         ap = axml.AXMLPrinter(bxml)
         print(ap.get_buff())
 
-    def save_icon(self, path, source="google"):
+    def save_icon(self, path):
         """
         Extract the icon from the ZIP archive and save it at the given path
         :param path: destination path of the icon
-        :param source: source of the app (ex: google, fdroid)
         :return: destination path of the icon, None in case of error
         """
         try:
@@ -411,6 +345,8 @@ class StaticAnalysis:
                 return path
         except Exception:
             logging.warning('Unable to get the icon from the APK')
+            return None
+
             # TODO: Set this back once details download is working again
             # logging.warning('Downloading icon from details')
             # try:
@@ -419,14 +355,6 @@ class StaticAnalysis:
             #     return saved_path
             # except Exception as e:
             #     logging.warning(e)
-            logging.warning('Downloading icon from store website')
-            try:
-                saved_path = self._get_icon_from_store(path, source)
-                logging.debug('Icon downloaded from {}'.format(source))
-                return saved_path
-            except Exception as e:
-                logging.error(e)
-        return None
 
     def get_icon_phash(self):
         """
