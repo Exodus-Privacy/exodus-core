@@ -69,6 +69,7 @@ token=~/.cache/gplaycli/token
 locale=en_US
 timezone=CEST
 ```
+
 Create Python `virtualenv`:
 ```
 virtualenv venv -p python3

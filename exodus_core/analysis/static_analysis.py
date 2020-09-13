@@ -340,9 +340,9 @@ class StaticAnalysis:
             with zipfile.ZipFile(self.apk_path) as z:
                 with open(path, 'wb') as f:
                     f.write(z.read(icon))
-                _ = Image.open(path)
-                logging.info('Get icon from APK: success')
-                return path
+                with Image.open(path) as _:
+                    logging.info('Get icon from APK: success')
+                    return path
         except Exception:
             logging.warning('Unable to get the icon from the APK')
             return None
