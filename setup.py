@@ -37,19 +37,19 @@ if which('dexdump') is None:
     sys.exit(1)
 
 install_requires = [
-    "requests==2.21.0",
-    "Pillow==6.2.2",
-    "dhash==1.3",
-    'gplaycli==3.26',
-    'protobuf==3.11.0',
-    "jellyfish==0.5.6",
+    'androguard==3.3.5',
     'cryptography==2.6.1',
-    'androguard==3.3.5'
+    'dhash==1.3',
+    'jellyfish==0.5.6',
+    'Pillow==6.2.2',
+    'requests==2.21.0',
+    'six==1.12.0',
+    'traitlets==4.3.2'
 ]
 
 setup(
     name='exodus_core',
-    version='1.3.1',
+    version='1.3.2',
     description='Core functionality of εxodus',
     author='Exodus Privacy',
     author_email='contact@exodus-privacy.eu.org',

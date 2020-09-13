@@ -48,28 +48,6 @@ Install `dexdump`:
 sudo apt-get install dexdump
 ```
 
-Create a `gplaycli` configuration file:
-```
-mkdir ~/.config/gplaycli
-nano ~/.config/gplaycli/gplaycli.conf
-```
-containing
-```
-[Credentials]
-gmail_address=
-gmail_password=
-#keyring_service=gplaycli
-token=True
-token_url=https://matlink.fr/token/email/gsfid
-
-[Cache]
-token=~/.cache/gplaycli/token
-
-[Locale]
-locale=en_US
-timezone=CEST
-```
-
 Create Python `virtualenv`:
 ```
 virtualenv venv -p python3
