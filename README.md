@@ -27,10 +27,27 @@ Clone this repository:
 git clone https://github.com/Exodus-Privacy/exodus-core.git
 cd exodus-core
 ```
+
+### Using Docker
+
+Build the Docker image:
+```
+docker build -t exodus-core .
+```
+
+Run tests:
+```
+docker run -it --rm exodus-core /bin/bash
+python -m unittest discover -s exodus_core -p "test_*.py"
+```
+
+### Manual installation
+
 Install `dexdump`:
 ```
 sudo apt-get install dexdump
 ```
+
 Create a `gplaycli` configuration file:
 ```
 mkdir ~/.config/gplaycli
@@ -57,10 +74,12 @@ Create Python `virtualenv`:
 virtualenv venv -p python3
 source venv/bin/activate
 ```
+
 Install dependencies:
 ```
 pip install -r requirements.txt
 ```
+
 Run tests:
 ```
 python -m unittest discover -s exodus_core -p "test_*.py"
