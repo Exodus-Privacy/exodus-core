@@ -42,14 +42,14 @@ install_requires = [
     'dhash==1.3',
     'jellyfish==0.5.6',
     'Pillow==6.2.2',
-    'requests==2.21.0',
+    'requests==2.26.0',
     'six==1.15.0',
     'traitlets==4.3.2'
 ]
 
 setup(
     name='exodus_core',
-    version='1.3.3',
+    version='1.3.4',
     description='Core functionality of εxodus',
     author='Exodus Privacy',
     author_email='contact@exodus-privacy.eu.org',
