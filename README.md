@@ -1,6 +1,6 @@
 # εxodus core
 
-[![Build Status](https://travis-ci.org/Exodus-Privacy/exodus-core.svg?branch=v1)](https://travis-ci.org/Exodus-Privacy/exodus-core) [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/Exodus-Privacy/exodus-core.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Exodus-Privacy/exodus-core/context:python)
+[![Build Status](https://github.com/Exodus-Privacy/exodus-core/actions/workflows/main.yml/badge.svg?branch=v1)](https://github.com/Exodus-Privacy/exodus-core/actions/workflows/main.yml) [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/Exodus-Privacy/exodus-core.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Exodus-Privacy/exodus-core/context:python)
 
 Contains:
 
