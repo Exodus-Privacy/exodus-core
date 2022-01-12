@@ -73,8 +73,8 @@ class TestExodus(unittest.TestCase):
         diff_1 = sa.get_icon_similarity(phash_1, phash_2)
         diff_2 = sa.get_icon_similarity(phash_2, phash_1)
 
-        self.assertEqual(diff_1, 0.7265625)
-        self.assertEqual(diff_2, 0.7265625)
+        self.assertEqual(diff_1, 0.734375)
+        self.assertEqual(diff_2, 0.734375)
 
     def test_icon_similarity_different_similarities(self):
         sa = StaticAnalysis()
