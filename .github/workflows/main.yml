@@ -1,6 +1,9 @@
 ---
 name: CI
 
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 on:
   push:
     branches:
@@ -14,15 +17,16 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    name: Build
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version:
           - 3.9
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
@@ -38,9 +42,32 @@ jobs:
           export PATH="$PATH:$PWD/exodus_core/dexdump/"
           python -m unittest discover -v -s exodus_core -p "test_*.py"
           python setup.py sdist
+      - name: Upload archive
+        uses: actions/upload-artifact@v3
+        with:
+          name: release
+          path: dist
+  release:
+    name: Create Github release
+    needs: build
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download archive
+        uses: actions/download-artifact@v3
+        with:
+          name: release
+          path: dist
       - name: Publish package to pypi on tag
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
+      - name: Create release
+        run: |
+          cd dist
+          echo "ARCHIVE=$(ls *.tar.gz)" >> $GITHUB_ENV
+          gh release create ${{ github.ref_name }} --title ${{ github.ref_name }} --generate-notes
+      - name: Upload archive on release
+        run: gh release upload ${{ github.ref_name }} dist/$ARCHIVE
