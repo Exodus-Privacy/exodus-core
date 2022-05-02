@@ -155,17 +155,21 @@ class StaticAnalysis:
         class_regex = re.compile(r'classes.*\.dex')
         classes = set()
 
-        with TemporaryDirectory() as tmp_dir, zipfile.ZipFile(apkfile, 'r') as apk_zip:
-            for info in apk_zip.infolist():
-                # apk files can contain apk files, again
-                if apk_regex.search(info.filename):
-                    with apk_zip.open(info) as apk_fp:
-                        classes = classes.union(StaticAnalysis._get_embedded_classes(apk_fp, depth + 1))
+        try:
+            with TemporaryDirectory() as tmp_dir, zipfile.ZipFile(apkfile, 'r') as apk_zip:
+                for info in apk_zip.infolist():
+                    # apk files can contain apk files, again
+                    if apk_regex.search(info.filename):
+                        with apk_zip.open(info) as apk_fp:
+                            classes = classes.union(StaticAnalysis._get_embedded_classes(apk_fp, depth + 1))
 
-                elif class_regex.search(info.filename):
-                    apk_zip.extract(info, tmp_dir)
-                    run = subprocess.check_output(['dexdump', '{}/{}'.format(tmp_dir, info.filename)])
-                    classes = classes.union(set(re.findall(r'[A-Z]+((?:\w+\/)+\w+)', run.decode(errors='ignore'))))
+                    elif class_regex.search(info.filename):
+                        apk_zip.extract(info, tmp_dir)
+                        run = subprocess.check_output(['dexdump', '{}/{}'.format(tmp_dir, info.filename)])
+                        classes = classes.union(set(re.findall(r'[A-Z]+((?:\w+\/)+\w+)', run.decode(errors='ignore'))))
+        except zipfile.BadZipFile as ex:
+            logging.error('Unable to decode {}'.format(apkfile))
+            raise Exception('Unable to decode the APK') from ex
 
         return classes
 
