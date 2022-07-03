@@ -43,23 +43,6 @@ def get_td_url():
     return DEFAULT
 
 
-def which(program):
-    def is_exe(fpath):
-        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
-
-    fpath, fname = os.path.split(program)
-    if fpath:
-        if is_exe(program):
-            return program
-    else:
-        for path in os.environ["PATH"].split(os.pathsep):
-            exe_file = os.path.join(path, program)
-            if is_exe(exe_file):
-                return exe_file
-
-    return None
-
-
 def get_details_from_gplaycli(handle):
     """
     Get the details from gpc like creator, number of downloads, etc
@@ -157,35 +140,48 @@ class StaticAnalysis:
         if self.apk is None:
             self.apk = APK(self.apk_path)
 
+    @staticmethod
+    def _get_embedded_classes(apkfile, depth=0):
+        """
+        Get the list of Java classes embedded into all DEX files.
+
+        :return: set of Java classes names as string
+        """
+        if depth > 10:  # zipbomb protection
+            logging.error(f'Max recursion depth in zip file reached: {apkfile}')
+            return set()
+
+        apk_regex = re.compile(r'.*\.apk')
+        class_regex = re.compile(r'classes.*\.dex')
+        classes = set()
+
+        try:
+            with TemporaryDirectory() as tmp_dir, zipfile.ZipFile(apkfile, 'r') as apk_zip:
+                for info in apk_zip.infolist():
+                    # apk files can contain apk files, again
+                    if apk_regex.search(info.filename):
+                        with apk_zip.open(info) as apk_fp:
+                            classes = classes.union(StaticAnalysis._get_embedded_classes(apk_fp, depth + 1))
+
+                    elif class_regex.search(info.filename):
+                        apk_zip.extract(info, tmp_dir)
+                        run = subprocess.check_output(['dexdump', f'{tmp_dir}/{info.filename}'])
+                        classes = classes.union(set(re.findall(r'[A-Z]+((?:\w+\/)+\w+)', run.decode(errors='ignore'))))
+        except zipfile.BadZipFile as ex:
+            logging.error(f'Unable to decode {apkfile}')
+            raise Exception('Unable to decode the APK') from ex
+
+        return classes
+
     def get_embedded_classes(self):
         """
         Get the list of Java classes embedded into all DEX files.
         :return: array of Java classes names as string
         """
-        if self.classes is not None:
-            return self.classes
+        if self.classes is None:
+            self.classes = list(self._get_embedded_classes(self.apk_path))
 
-        class_regex = re.compile(r'classes.*\.dex')
-        with TemporaryDirectory() as tmp_dir:
-            with zipfile.ZipFile(self.apk_path, "r") as apk_zip:
-                class_infos = (info for info in apk_zip.infolist() if class_regex.search(info.filename))
-                for info in class_infos:
-                    apk_zip.extract(info, tmp_dir)
-            dexdump = which('dexdump')
-            cmd = '{} {}/classes*.dex | perl -n -e\'/[A-Z]+((?:\w+\/)+\w+)/ && print "$1\n"\'|sort|uniq'.format(
-                dexdump, tmp_dir)
-            try:
-                self.classes = subprocess.check_output(
-                    cmd,
-                    stderr=subprocess.STDOUT,
-                    shell=True,
-                    universal_newlines=True
-                ).splitlines()
-                logging.debug('{} classes found in {}'.format(len(self.classes), self.apk_path))
-                return self.classes
-            except subprocess.CalledProcessError:
-                logging.error('Unable to decode {}'.format(self.apk_path))
-                raise Exception('Unable to decode the APK')
+        return self.classes
 
     def detect_trackers_in_list(self, class_list):
         """

@@ -100,10 +100,10 @@ class TestExodus(unittest.TestCase):
 
     def test_list_classes(self):
         apps = [
-            {'name': 'braiar', 'nb_classes': 3882},
-            {'name': 'whatsapp', 'nb_classes': 5429},
-            {'name': 'hsbc', 'nb_classes': 7431},
-            {'name': 'instapaper', 'nb_classes': 2650},
+            {'name': 'braiar', 'nb_classes': 3896},
+            {'name': 'whatsapp', 'nb_classes': 5457},
+            {'name': 'hsbc', 'nb_classes': 7481},
+            {'name': 'instapaper', 'nb_classes': 2676},
         ]
         for app in apps:
             with self.subTest(app=app['name']):
