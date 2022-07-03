@@ -148,7 +148,7 @@ class StaticAnalysis:
         :return: set of Java classes names as string
         """
         if depth > 10:  # zipbomb protection
-            logging.error('max recursion depth in zip file reached: %s' % apkfile)
+            logging.error(f'Max recursion depth in zip file reached: {apkfile}')
             return set()
 
         apk_regex = re.compile(r'.*\.apk')
@@ -165,10 +165,10 @@ class StaticAnalysis:
 
                     elif class_regex.search(info.filename):
                         apk_zip.extract(info, tmp_dir)
-                        run = subprocess.check_output(['dexdump', '{}/{}'.format(tmp_dir, info.filename)])
+                        run = subprocess.check_output(['dexdump', f'{tmp_dir}/{info.filename}'])
                         classes = classes.union(set(re.findall(r'[A-Z]+((?:\w+\/)+\w+)', run.decode(errors='ignore'))))
         except zipfile.BadZipFile as ex:
-            logging.error('Unable to decode {}'.format(apkfile))
+            logging.error(f'Unable to decode {apkfile}')
             raise Exception('Unable to decode the APK') from ex
 
         return classes
