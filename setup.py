@@ -6,10 +6,11 @@ import sys
 from setuptools import setup, find_packages
 
 
-def which(program):
-    def is_exe(fpath):
-        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+def is_exe(fpath):
+    return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
+
+def which(program):
     fpath, fname = os.path.split(program)
     if fpath:
         if is_exe(program):
@@ -19,8 +20,19 @@ def which(program):
             exe_file = os.path.join(path, program)
             if is_exe(exe_file):
                 return exe_file
+        return checkAndroidSdkDir(program)
 
-    return None
+
+def checkAndroidSdkDir(program):
+    for env in ('ANDROID_HOME', 'ANDROID_SDK_ROOT'):
+        env_val = os.getenv(env)
+        if env_val:
+            buildTools = os.path.join(env_val, 'build-tools')
+            if os.path.isdir(buildTools):
+                for btDir in sorted(os.listdir(buildTools), reverse=True):
+                    prog = os.path.join(buildTools, btDir, program)
+                    if is_exe(prog):
+                        return prog
 
 
 if sys.version_info.major == 3 and sys.version_info.minor < 3:
