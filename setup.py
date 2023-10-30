@@ -39,7 +39,7 @@ if which('dexdump') is None:
 install_requires = [
     'androguard==3.3.5',
     'cryptography==3.3.2',
-    'dhash==1.3',
+    'dhash==1.4',
     'jellyfish==0.5.6',
     'Pillow==10.0.1',
     'requests>=2.26,<2.32',
