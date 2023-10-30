@@ -21,6 +21,23 @@ from PIL import Image
 PHASH_SIZE = 8
 
 
+def which(program):
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+
+    return None
+
+
 def get_td_url():
     DEFAULT = "https://matlink.fr/token/email/gsfid"
     cred_paths_list = [
@@ -164,6 +181,11 @@ class StaticAnalysis:
                             classes = classes.union(StaticAnalysis._get_embedded_classes(apk_fp, depth + 1))
 
                     elif class_regex.search(info.filename):
+                        if which('dexdump') is None:
+                            logging.error("Unable to find dexdump executable, please install it.")
+                            logging.error("On Debian-like OS, run sudo apt-get install dexdump")
+                            sys.exit(1)
+
                         apk_zip.extract(info, tmp_dir)
                         run = subprocess.check_output(['dexdump', f'{tmp_dir}/{info.filename}'])
                         classes = classes.union(set(re.findall(r'[A-Z]+((?:\w+\/)+\w+)', run.decode(errors='ignore'))))

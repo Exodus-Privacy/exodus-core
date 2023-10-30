@@ -1,26 +1,8 @@
 #!/usr/bin/env python
 
-import os
 import sys
 
 from setuptools import setup, find_packages
-
-
-def which(program):
-    def is_exe(fpath):
-        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
-
-    fpath, fname = os.path.split(program)
-    if fpath:
-        if is_exe(program):
-            return program
-    else:
-        for path in os.environ["PATH"].split(os.pathsep):
-            exe_file = os.path.join(path, program)
-            if is_exe(exe_file):
-                return exe_file
-
-    return None
 
 
 if sys.version_info.major == 3 and sys.version_info.minor < 3:
@@ -29,11 +11,6 @@ if sys.version_info.major == 3 and sys.version_info.minor < 3:
 
 if sys.platform == 'darwin' or sys.platform == 'win32':
     print("Unfortunately, we do not support your platform %s" % sys.platform)
-    sys.exit(1)
-
-if which('dexdump') is None:
-    print("Unable to find dexdump executable, please install it.")
-    print("On Debian-like OS, run sudo apt-get install dexdump")
     sys.exit(1)
 
 install_requires = [
