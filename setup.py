@@ -15,7 +15,7 @@ if sys.platform == 'darwin' or sys.platform == 'win32':
 
 install_requires = [
     'androguard==3.3.5',
-    'cryptography==3.3.2',
+    'cryptography==41.0.4',
     'dhash==1.4',
     'jellyfish==0.5.6',
     'Pillow==10.0.1',
