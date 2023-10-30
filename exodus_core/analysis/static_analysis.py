@@ -15,7 +15,7 @@ import requests
 import six
 from androguard.core.bytecodes import axml
 from androguard.core.bytecodes.apk import APK
-from cryptography.x509.name import _SENTINEL, ObjectIdentifier, _NAMEOID_DEFAULT_TYPE, _ASN1Type, NameAttribute
+from cryptography.x509.name import ObjectIdentifier, _NAMEOID_DEFAULT_TYPE, _ASN1Type, NameAttribute
 from PIL import Image
 
 PHASH_SIZE = 8
@@ -421,14 +421,14 @@ class StaticAnalysis:
     def get_certificates(self):
         certificates = []
 
-        def _my_name_init(self, oid, value, _type=_SENTINEL):
+        def _my_name_init(self, oid, value, _type):
             if not isinstance(oid, ObjectIdentifier):
                 raise TypeError("oid argument must be an ObjectIdentifier instance.")
             if not isinstance(value, six.text_type):
                 raise TypeError("value argument must be a text type.")
             if len(value) == 0:
                 raise ValueError("Value cannot be an empty string")
-            if _type == _SENTINEL:
+            if _type is None:
                 _type = _NAMEOID_DEFAULT_TYPE.get(oid, _ASN1Type.UTF8String)
             if not isinstance(_type, _ASN1Type):
                 raise TypeError("_type must be from the _ASN1Type enum")
