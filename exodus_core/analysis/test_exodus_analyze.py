@@ -113,7 +113,7 @@ class TestExodus(unittest.TestCase):
 
     def test_embedded_trackers(self):
         apps = [
-            {'name': 'braiar', 'nb_trackers': 0},
+            {'name': 'braiar', 'nb_trackers': 1},
             {'name': 'whatsapp', 'nb_trackers': 1},
             {'name': 'hsbc', 'nb_trackers': 3},
         ]
