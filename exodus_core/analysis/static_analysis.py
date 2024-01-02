@@ -4,21 +4,24 @@ import logging
 import os
 import re
 import subprocess
+import sys
 import zipfile
 from collections import namedtuple
-from future.moves import sys
 from hashlib import sha256, sha1
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import dhash
 import requests
 import six
-from androguard.core.bytecodes import axml
-from androguard.core.bytecodes.apk import APK
+from androguard.core import axml
+from androguard.core.apk import APK
+from androguard.util import set_log
 from cryptography.x509.name import ObjectIdentifier, _NAMEOID_DEFAULT_TYPE, _ASN1Type, NameAttribute
 from PIL import Image
 
 PHASH_SIZE = 8
+
+set_log("INFO")
 
 
 def which(program):
