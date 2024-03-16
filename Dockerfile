@@ -1,4 +1,4 @@
-FROM python:3.9-slim-bullseye
+FROM python:3.11-slim-bookworm
 
 COPY ./requirements.txt /opt/requirements.txt
 RUN pip3 install -r /opt/requirements.txt
