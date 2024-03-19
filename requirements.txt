@@ -1,4 +1,4 @@
-androguard==4.1.0
+androguard==4.1.1
 cryptography==42.0.4
 dhash==1.4
 jellyfish==0.5.6
