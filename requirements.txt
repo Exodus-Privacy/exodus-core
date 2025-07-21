@@ -90,7 +90,10 @@ parso==0.8.5
     # via jedi
 pexpect==4.9.0
     # via ipython
-pillow==12.0.0
+pickleshare==0.7.5
+    # via ipython
+pillow==10.3.0 ; python_version < "3.13"
+pillow==10.4.0 ; python_version >= "3.13"
     # via
     #   exodus_core (pyproject.toml)
     #   matplotlib
