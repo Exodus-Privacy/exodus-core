@@ -59,7 +59,7 @@ jobs:
       - name: Download archive
         uses: actions/download-artifact@v4
         with:
-          name: release
+          name: release-3.11
           path: dist
       - name: Publish package to pypi on tag
         uses: pypa/gh-action-pypi-publish@release/v1
