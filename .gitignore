@@ -4,3 +4,7 @@ __pycache__/
 venv/
 .idea
 .vscode
+*.egg-info
+build
+dist
+exodus_core/_version.py

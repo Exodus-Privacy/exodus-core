@@ -43,7 +43,7 @@ jobs:
         run: |
           export PATH="$PATH:$PWD/exodus_core/dexdump/"
           python -m unittest discover -v -s exodus_core -p "test_*.py"
-          python setup.py sdist
+          python -m build --sdist --wheel
       - name: Upload archive
         uses: actions/upload-artifact@v4
         with:

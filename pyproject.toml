@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "exodus_core"
+description = "Core functionality of εxodus"
+authors = [{name = "Exodus Privacy", email = "contact@exodus-privacy.eu.org"}]
+requires-python = ">=3.11"
+readme = {file = "README.md", content-type = "text/x-markdown"}
+license = "AGPL-3.0-only"
+dependencies = [
+    'androguard',
+    'cryptography',
+    'dhash',
+    'jellyfish',
+    'Pillow',
+    'requests',
+    'six',
+    'traitlets',
+    'build'
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/Exodus-Privacy/exodus-core"
+Code = "https://github.com/Exodus-Privacy/exodus-core"
+Issues = "https://github.com/Exodus-Privacy/exodus-core/issues"
+Changelog = "https://github.com/Exodus-Privacy/exodus-core/releases"
+
+[tool.setuptools.packages]
+find = {exclude = ["apks"]}
+
+[tool.setuptools_scm]
+version_file = "exodus_core/_version.py"
