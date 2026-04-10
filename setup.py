@@ -19,7 +19,7 @@ install_requires = [
     'dhash==1.4',
     'jellyfish==0.5.6',
     'Pillow==10.4.0',
-    'requests>=2.26,<2.33',
+    'requests>=2.26,<2.34',
     'six==1.15.0',
     'traitlets==4.3.2'
 ]
