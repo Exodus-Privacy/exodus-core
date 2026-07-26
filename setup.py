@@ -18,7 +18,7 @@ install_requires = [
     'cryptography==48.0.1',
     'dhash==1.4',
     'jellyfish==0.5.6',
-    'Pillow==12.2.0',
+    'Pillow==12.3.0',
     'requests>=2.26,<2.34',
     'six==1.15.0',
     'traitlets==4.3.2'
