@@ -37,6 +37,15 @@ def which(program):
             exe_file = os.path.join(path, program)
             if is_exe(exe_file):
                 return exe_file
+        # if program is not in the path, check the $ANDROID_HOME/build-tools/{version}/ directory
+        env_val = os.getenv('ANDROID_HOME')
+        if env_val:
+            buildTools = os.path.join(env_val, 'build-tools')
+            if os.path.isdir(buildTools):
+                for btDir in sorted(os.listdir(buildTools), reverse=True): # 35.0.0, 34.0.3, 34.0.1, ...
+                    exe_file = os.path.join(buildTools, btDir, program)
+                    if is_exe(exe_file):
+                        return exe_file
 
     return None
 
