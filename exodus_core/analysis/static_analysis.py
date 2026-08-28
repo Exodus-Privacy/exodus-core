@@ -271,7 +271,16 @@ class StaticAnalysis:
         :return: application permissions list
         """
         self.load_apk()
-        return self.apk.get_permissions()
+        permissions = []
+        for element in self.apk.get_android_manifest_xml().iter():
+            tag = element.tag.rsplit('}', 1)[-1]
+            if tag in ('uses-permission', 'uses-permission-sdk-23',
+                       'uses-permission-sdk-m'):
+                name = element.get(
+                    '{http://schemas.android.com/apk/res/android}name')
+                if name and name not in permissions:
+                    permissions.append(name)
+        return permissions
 
     def get_app_name(self):
         """
