@@ -1,4 +1,5 @@
 import unittest
+import xml.etree.ElementTree as ET
 
 from exodus_core.analysis.static_analysis import StaticAnalysis
 from exodus_core.analysis.apk_signature import ApkSignature
@@ -134,6 +135,61 @@ class TestExodus(unittest.TestCase):
                 version = version_code('./apks/{}.apk'.format(app['name']))
                 self.assertIsNotNone(version)
                 self.assertEqual(int(version), app['version'])
+
+
+ANDROID_NS = '{http://schemas.android.com/apk/res/android}'
+
+
+class FakeApk:
+    """Minimal APK stand-in exposing an AndroidManifest XML tree."""
+
+    def get_android_manifest_xml(self):
+        def perm(tag, name):
+            element = ET.Element(tag)
+            element.set(ANDROID_NS + 'name', name)
+            return element
+
+        root = ET.Element('manifest')
+        root.append(perm('uses-permission',
+                         'android.permission.ACCESS_NETWORK_STATE'))
+        root.append(perm('uses-permission-sdk-23',
+                         'android.permission.FOREGROUND_SERVICE'))
+        root.append(perm('uses-permission-sdk-23',
+                         'android.permission.FOREGROUND_SERVICE_CAMERA'))
+        root.append(perm('uses-permission-sdk-m',
+                         'android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS'))
+        # A duplicate declaration must not be reported twice.
+        root.append(perm('uses-permission',
+                         'android.permission.ACCESS_NETWORK_STATE'))
+        return root
+
+
+class TestPermissions(unittest.TestCase):
+
+    def setUp(self):
+        self.sa = StaticAnalysis()
+        self.sa.apk = FakeApk()
+
+    def test_get_permissions_returns_plain_and_sdk_23(self):
+        perms = self.sa.get_permissions()
+        self.assertIn('android.permission.ACCESS_NETWORK_STATE', perms)
+        self.assertIn('android.permission.FOREGROUND_SERVICE', perms)
+        self.assertIn('android.permission.FOREGROUND_SERVICE_CAMERA', perms)
+
+    def test_get_permissions_returns_sdk_m(self):
+        perms = self.sa.get_permissions()
+        self.assertIn('android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS',
+                      perms)
+
+    def test_get_permissions_deduplicates(self):
+        perms = self.sa.get_permissions()
+        self.assertEqual(len(perms), 4)
+        self.assertEqual(perms.count('android.permission.ACCESS_NETWORK_STATE'), 1)
+
+    def test_get_permissions_preserves_manifest_order(self):
+        perms = self.sa.get_permissions()
+        self.assertEqual(perms[0], 'android.permission.ACCESS_NETWORK_STATE')
+        self.assertEqual(perms[1], 'android.permission.FOREGROUND_SERVICE')
 
 
 if __name__ == '__main__':
