@@ -56,21 +56,14 @@ Install `dexdump`:
 sudo apt-get install dexdump
 ```
 
-Create Python `virtualenv`:
+Install dependencies with [uv](https://docs.astral.sh/uv/):
 
 ```shell
-virtualenv venv -p python3
-source venv/bin/activate
-```
-
-Install dependencies:
-
-```shell
-pip install -r requirements.txt
+uv sync
 ```
 
 Run tests:
 
 ```shell
-python -m unittest discover -s exodus_core -p "test_*.py"
+uv run python -m unittest discover -s exodus_core -p "test_*.py"
 ```
