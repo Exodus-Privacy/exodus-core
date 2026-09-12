@@ -6,4 +6,4 @@ COPY . /exodus-core
 WORKDIR /exodus-core
 RUN uv sync --frozen
 
-ENV PATH "/exodus-core/.venv/bin:${PATH}:/exodus-core/exodus_core/dexdump/"
+ENV PATH="/exodus-core/.venv/bin:${PATH}:/exodus-core/exodus_core/dexdump/"
