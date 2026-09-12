@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "exodus_core"
+version = "1.3.15"
+description = "Core functionality of εxodus"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Exodus Privacy", email = "contact@exodus-privacy.eu.org" },
+]
+dependencies = [
+    "androguard==4.1.1",
+    "cryptography==50.0.0",
+    "dhash==1.4",
+    "jellyfish==0.5.6",
+    "Pillow==12.3.0",
+    "requests>=2.26,<2.34",
+    "six==1.15.0",
+    "traitlets==4.3.2",
+]
+
+[project.urls]
+Homepage = "https://github.com/Exodus-Privacy/exodus-core"
+
+[dependency-groups]
+dev = ["flake8"]
+
+[tool.setuptools]
+include-package-data = true
+zip-safe = false
+
+[tool.setuptools.packages.find]
+exclude = ["*.tests", "*.tests.*", "test*", "tests"]
